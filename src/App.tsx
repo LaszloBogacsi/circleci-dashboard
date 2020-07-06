@@ -818,11 +818,11 @@ function App() {
             <header className="App-header">
                 CIRCLECI BUILD DASHBOARD
             </header>
-            <div>
+            <div className={styles.inputSelectors}>
                 <OrgSelector options={options} selectedOrg={setSelectedOrg}/>
                 <APITokenInput setApiToken={setApiToken}/>
             </div>
-            PROJECTS
+            <h1>PROJECTS</h1>
             <WidgetContainer widgetData={processAPIData(apiData)}/>
         </div>
     );
@@ -931,7 +931,7 @@ export const Widget = (props: WidgetProps) => {
                 <div>{data.commitSubject}</div>
             </div>
             {/*<div>{data.revision}</div>*/}
-            <div className={styles.workflowsContainer}>{[1].map(_=> data.widgetWorkflows.map((wf, index) => {
+            <div className={styles.workflowsContainer}>{data.widgetWorkflows.map((wf, index) => {
                 return (
                     <div className={styles.workflowContainer} key={index}>
                         <div className={styles.workflowName}><a href={wf.url}>{wf.name}</a></div>
@@ -944,7 +944,7 @@ export const Widget = (props: WidgetProps) => {
                         })}</div>
                     </div>
                 )
-            }))}</div>
+            })}</div>
             <div className={styles.timeMetricsContainer}>
                 <div>{data.duration}</div>
                 <div>{data.since}</div>
@@ -973,9 +973,16 @@ function OrgSelector(props: OrgSelectorProps): ReactElement {
 
     const handleChange = (event: ChangeEvent<HTMLSelectElement>) => setSelected(event.target.value || "");
     return (
-        <select value={selected} onChange={handleChange}>
-            {options.map((option, index) => <option key={index} value={option.name}>{option.name}-{option.vcs_type}</option>)}
-        </select>
+        <div>
+            <label htmlFor="select">ORG</label>
+            <div>
+                <select value={selected} onChange={handleChange}>
+                    {options.map((option, index) => <option key={index} value={option.name}>{option.name}-{option.vcs_type}</option>)}
+                </select>
+            </div>
+
+        </div>
+
     )
 }
 
@@ -993,9 +1000,13 @@ function APITokenInput(props: APITokenInputProps): ReactElement {
     }
     const onInputChange = (event: ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value || "");
     return (
-        <div>
-            <input value={inputValue} onChange={onInputChange} type="text"/>
-            <button onClick={onClick}>+</button>
+        <div className={styles.tokenInputContainer}>
+            <label htmlFor="input">API Token</label>
+            <div className={styles.tokenInput}>
+                <input value={inputValue} onChange={onInputChange} type="text" placeholder="circleci api token"/>
+                <button onClick={onClick}>+</button>
+            </div>
+
         </div>
     )
 }

@@ -4,13 +4,16 @@ html, body, #root {
   --failed: #c43231;
   --running: #31447c;
   --cancelled: #444444;
-  --darkgrey: darkgrey;
+  --secondary-text-color: darkgrey;
   --primary-text-color: whitesmoke;
+  --app-background-color: #262626;
+  --input-background-color: #0a0a0a;
 }
 .App {
   text-align: center;
-  background-color: #282c34;
+  background-color: var(--app-background-color);
   height: 100%;
+  padding:2rem;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -20,13 +23,13 @@ html, body, #root {
 }
 
 .App-header {
-  min-height: 10vh;
+  min-height: 5vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: var(--primary-text-color);
+  color: var(--secondary-text-color);
 }
 
 @keyframes App-logo-spin {
