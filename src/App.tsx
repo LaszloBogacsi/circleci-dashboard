@@ -14,6 +14,7 @@ interface ApiData {
 
 function useApiData() {
     const initialApiData: ApiData[] = [];
+
     async function getApiData(): Promise<ApiData[]> {
         const projects = ["atsdcf-services"];
 
@@ -27,6 +28,7 @@ function useApiData() {
             jobs: [{workflowId: "ae768c71-303e-44e0-a223-5bc3d7a35354", jobs: jobs.items}]
         }));
     }
+
     const [apiData, setApiData] = useState(initialApiData);
     useEffect(() => {
         const loadApiData = async () => {
@@ -745,7 +747,7 @@ function App() {
         (async () => setOptions(await getOptions()))()
     }, [])
 
-    console.log(apiData);
+    // console.log(apiData);
 
     async function getOptions(): Promise<Collaboration[]> {
         // https://circleci.com/api/v2/me/collaborations
@@ -819,7 +821,7 @@ function App() {
                 CIRCLECI BUILD DASHBOARD
             </header>
             <div className={styles.inputSelectors}>
-                <OrgSelector options={options} selectedOrg={setSelectedOrg}/>
+                <OrgSelector options={options} selectedOrg={setSelectedOrg} previouslySelected={getSelectedOrgFromLocalStorage()}/>
                 <APITokenInput setApiToken={setApiToken}/>
             </div>
             <h1>PROJECTS</h1>
@@ -919,7 +921,7 @@ interface WidgetProps {
 
 export const Widget = (props: WidgetProps) => {
     const {data} = props;
-    console.log(data);
+    // console.log(data);
     const projectStatus = "success"
     return (
         <div className={`${styles.widget} ${styles[projectStatus]}`}>
@@ -965,25 +967,59 @@ export default App;
 interface OrgSelectorProps {
     options: Collaboration[]
     selectedOrg: (collaboration: Collaboration) => void
+    previouslySelected?: Collaboration
 }
 
 function OrgSelector(props: OrgSelectorProps): ReactElement {
-    const {options} = props;
-    const [selected, setSelected] = useState(options.length ? options[0].name : "");
+    const {options, previouslySelected} = props;
+    const initialSelected = previouslySelected ? previouslySelected : options.length ? options[0] : {} as Collaboration;
+    console.log(initialSelected);
+    const [selected, setSelected] = useState(initialSelected);
+    console.log(selected);
 
-    const handleChange = (event: ChangeEvent<HTMLSelectElement>) => setSelected(event.target.value || "");
+    useEffect(() => {
+        if (!previouslySelected && options.length){
+            setSelected(options[0]);
+        }
+    }, [options, previouslySelected])
+    if (!previouslySelected && selected && selected.name) {
+        saveSelectedOrgToLocalStorage(selected);
+    }
+    const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
+        let collaboration = options.find(option => option.name === event.target.value)!;
+        console.log(collaboration);
+        setSelected(collaboration);
+        saveSelectedOrgToLocalStorage(collaboration);
+    }
     return (
         <div>
             <label htmlFor="select">ORG</label>
             <div>
-                <select value={selected} onChange={handleChange}>
-                    {options.map((option, index) => <option key={index} value={option.name}>{option.name}-{option.vcs_type}</option>)}
+                <select value={selected.name} onChange={handleChange}>
+                    {options.map((option, index) => <option key={index} value={option.name}>{option.name}</option>)}
                 </select>
             </div>
 
         </div>
 
     )
+}
+
+function saveSelectedOrgToLocalStorage(selectedOrg: Collaboration): void {
+    saveToLocalStorage("circleci-dashboard-collab-storage", JSON.stringify(selectedOrg));
+}
+
+function getSelectedOrgFromLocalStorage(): Collaboration | undefined {
+    return getFromLocalStorage("circleci-dashboard-collab-storage");
+}
+
+function saveToLocalStorage(key: string, value: string) {
+    window.localStorage.setItem(key, value);
+}
+
+function getFromLocalStorage(key: string): Collaboration | undefined {
+    const item = localStorage.getItem(key)
+    return item !== null ? JSON.parse(item) as any as Collaboration : undefined;
 }
 
 interface APITokenInputProps {
