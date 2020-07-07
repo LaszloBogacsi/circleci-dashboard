@@ -782,7 +782,7 @@ function App() {
                 commitSubject: latestPipeline?.vcs.commit.subject,
                 actorName: latestPipeline?.trigger.actor.login,
                 repoUrl: latestPipeline?.vcs.origin_repository_url,
-                revision: latestPipeline?.vcs.revision,
+                revisionUrl: `${latestPipeline?.vcs.origin_repository_url}/commit/${latestPipeline?.vcs.revision}`,
                 projectStatus: "", // calculate from workflow states
                 duration: `${Date.now() - Date.parse(maybeCreatedAt)}`,
                 since: "10 days ago",
@@ -802,7 +802,7 @@ function App() {
                                     status: job.status,
                                     stoppedAt: job.stopped_at,
                                     type: job.type,
-                                    url: job.job_number ? `https://app.circleci.com/pipelines/${workflow.project_slug}/${workflow.pipeline_number}/workflows/${workflow.id}/jobs${job.job_number}` : undefined
+                                    url: job.job_number ? `https://app.circleci.com/pipelines/${workflow.project_slug}/${workflow.pipeline_number}/workflows/${workflow.id}/jobs/${job.job_number}` : undefined
                                 } as WidgetJob
                             })
                         })
@@ -858,7 +858,7 @@ interface WidgetData {
     commitSubject: string
     actorName: string
     repoUrl: string
-    revision: string
+    revisionUrl: string
     projectStatus: string
     duration: string
     since: string
@@ -930,7 +930,7 @@ export const Widget = (props: WidgetProps) => {
                 <div>{data.pipelineNumber}</div>
                 <div>{data.branch}</div>
                 <div>{data.actorName}</div>
-                <div>{data.commitSubject}</div>
+                <div><a href={data.revisionUrl}>{data.commitSubject}</a></div>
             </div>
             {/*<div>{data.revision}</div>*/}
             <div className={styles.workflowsContainer}>{data.widgetWorkflows.map((wf, index) => {
@@ -939,9 +939,11 @@ export const Widget = (props: WidgetProps) => {
                         <div className={styles.workflowName}><a href={wf.url}>{wf.name}</a></div>
                         <div className={styles.jobs}>{wf.jobs.map((job, index) => {
                             return (
+                                <a href={job.url} title={job.name}>
                                 <div key={index}>
-                                    <object data={checkmark} type="image/svg+xml" className={styles.svg}>Checkmark</object>
+                                        <object data={checkmark} type="image/svg+xml" className={styles.svg}>Checkmark</object>
                                 </div>
+                                </a>
                             )
                         })}</div>
                     </div>

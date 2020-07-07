@@ -37,7 +37,8 @@
 }
 
 .svg {
-    margin-right: 6px
+    margin-right: 6px;
+    pointer-events: none
 }
 
 a {
