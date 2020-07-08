@@ -21,12 +21,12 @@ function useApiData() {
         const pipelines = await getPipelinesForProject();
         const workflows = await getWorkflowsForPipeline();
         const jobs = await getJobsForWorkflow();
-        return projects.map(project => ({
+        return [1, 2, 3, 4, 5, 6, 7, 8].flatMap(num => projects.map(project => ({
             project,
             pipelines: pipelines.items,
             workflows: workflows.items,
             jobs: [{workflowId: "ae768c71-303e-44e0-a223-5bc3d7a35354", jobs: jobs.items}]
-        }));
+        })));
     }
 
     const [apiData, setApiData] = useState(initialApiData);
@@ -919,10 +919,46 @@ interface WidgetProps {
     data: WidgetData
 }
 
+enum WorkflowStatus {
+    SUCCESS = "success",
+    RUNNING = "running",
+    NOT_RUN = "not_run",
+    FAILED = "failed",
+    ERROR = "error",
+    FAILING = "failing",
+    ON_HOLD = "on_hold",
+    CANCELLED = "cancelled",
+    UNAUTHORIZED = "unathorized"
+}
+
+enum ProjectStatus {
+    SUCCESS = "success",
+    RUNNING = "running",
+    FAILED = "failed",
+    ON_HOLD = "on_hold",
+    CANCELLED = "cancelled"
+}
+
+export function getProjectStatus(workflows: { name: string, status: string }[]): ProjectStatus {
+    const uniqueByName = workflows.filter((v, i, a) => a.findIndex(workflow => workflow.name === v.name) === i);
+    if (uniqueByName.some(wf => wf.status === WorkflowStatus.RUNNING)) {
+        return ProjectStatus.RUNNING;
+    } else if (uniqueByName.some(wf => wf.status === WorkflowStatus.CANCELLED)) {
+        return ProjectStatus.CANCELLED;
+    } else if (uniqueByName.some(wf => wf.status === WorkflowStatus.ON_HOLD)) {
+        return ProjectStatus.ON_HOLD;
+    } else if (uniqueByName.every(wf => wf.status === WorkflowStatus.SUCCESS)) {
+        return ProjectStatus.SUCCESS;
+    }  else {
+        return ProjectStatus.FAILED;
+    }
+}
+
+
 export const Widget = (props: WidgetProps) => {
     const {data} = props;
     // console.log(data);
-    const projectStatus = "success"
+    const projectStatus = getProjectStatus(data.widgetWorkflows.map(wwf => ({status: wwf.status, name: wwf.name})))
     return (
         <div className={`${styles.widget} ${styles[projectStatus]}`}>
             <h2><a href={data.repoUrl}>{data.projectName}</a></h2>
@@ -940,9 +976,9 @@ export const Widget = (props: WidgetProps) => {
                         <div className={styles.jobs}>{wf.jobs.map((job, index) => {
                             return (
                                 <a href={job.url} title={job.name}>
-                                <div key={index}>
+                                    <div key={index}>
                                         <object data={checkmark} type="image/svg+xml" className={styles.svg}>Checkmark</object>
-                                </div>
+                                    </div>
                                 </a>
                             )
                         })}</div>
@@ -980,7 +1016,7 @@ function OrgSelector(props: OrgSelectorProps): ReactElement {
     console.log(selected);
 
     useEffect(() => {
-        if (!previouslySelected && options.length){
+        if (!previouslySelected && options.length) {
             setSelected(options[0]);
         }
     }, [options, previouslySelected])
