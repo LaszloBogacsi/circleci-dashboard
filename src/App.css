@@ -4,6 +4,7 @@ html, body, #root {
   --failed: #c43231;
   --running: #31447c;
   --cancelled: #444444;
+  --on-hold: #8267e4;
   --secondary-text-color: darkgrey;
   --primary-text-color: whitesmoke;
   --app-background-color: #262626;

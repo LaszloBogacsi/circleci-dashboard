@@ -85,6 +85,10 @@ a:hover {
     background-color: var(--cancelled);
 }
 
+.on_hold {
+    background-color: var(--on-hold);
+}
+
 .widgetSummary {
     display: grid;
     grid-template-columns: repeat(2, auto);
