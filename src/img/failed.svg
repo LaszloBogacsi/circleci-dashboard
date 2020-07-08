@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<svg version="1.1" id="failed" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+     viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+	    <style>
+        #failed {
+        fill: #FFF5F5F5;
+        }
+    </style>
+    <g><g><path d="M256,0C114.848,0,0,114.848,0,256s114.848,256,256,256s256-114.848,256-256S397.152,0,256,0z M256,480
+			C132.48,480,32,379.52,32,256S132.48,32,256,32s224,100.48,224,224S379.52,480,256,480z"/></g></g>
+    <g><g><rect x="240" y="112" width="32" height="224"/></g></g>
+    <g><g><rect x="240" y="368" width="32" height="32"/></g></g>
+</svg>

@@ -1,6 +1,10 @@
 import React, {ChangeEvent, ReactElement, useEffect, useState} from 'react';
 import './App.css';
-import checkmark from './right.svg'
+import success from './img/success.svg'
+import failed from './img/failed.svg'
+import cancelled from './img/cancelled.svg'
+import running from './img/running.svg'
+import on_hold from './img/on_hold.svg'
 
 import styles from './widget.module.css';
 import wcStyles from './widget-container.module.css';
@@ -658,7 +662,7 @@ function useApiData() {
                     "started_at": "2020-07-01T16:56:49Z",
                     "name": "Test and package",
                     "project_slug": "gh/ITV/atsdcf-services",
-                    "status": "success",
+                    "status": "failed",
                     "type": "build",
                     "stopped_at": "2020-07-01T17:00:30Z"
                 },
@@ -671,7 +675,7 @@ function useApiData() {
                     "started_at": "2020-07-01T17:00:35Z",
                     "name": "Remove test proxy",
                     "project_slug": "gh/ITV/atsdcf-services",
-                    "status": "success",
+                    "status": "on_hold",
                     "type": "build",
                     "stopped_at": "2020-07-01T17:02:25Z"
                 },
@@ -684,7 +688,7 @@ function useApiData() {
                     "started_at": "2020-07-01T17:00:34Z",
                     "name": "Create application version",
                     "project_slug": "gh/ITV/atsdcf-services",
-                    "status": "success",
+                    "status": "cancelled",
                     "type": "build",
                     "stopped_at": "2020-07-01T17:01:09Z"
                 },
@@ -697,7 +701,7 @@ function useApiData() {
                     "started_at": "2020-07-01T17:01:15Z",
                     "name": "Deploy dev",
                     "project_slug": "gh/ITV/atsdcf-services",
-                    "status": "success",
+                    "status": "running",
                     "type": "build",
                     "stopped_at": "2020-07-01T17:03:35Z"
                 },
@@ -939,6 +943,14 @@ enum ProjectStatus {
     CANCELLED = "cancelled"
 }
 
+enum JobStatus {
+    SUCCESS = "success",
+    RUNNING = "running",
+    FAILED = "failed",
+    ON_HOLD = "on_hold",
+    CANCELLED = "cancelled"
+}
+
 export function getProjectStatus(workflows: { name: string, status: string }[]): ProjectStatus {
     const uniqueByName = workflows.filter((v, i, a) => a.findIndex(workflow => workflow.name === v.name) === i);
     if (uniqueByName.some(wf => wf.status === WorkflowStatus.RUNNING)) {
@@ -949,7 +961,7 @@ export function getProjectStatus(workflows: { name: string, status: string }[]):
         return ProjectStatus.ON_HOLD;
     } else if (uniqueByName.every(wf => wf.status === WorkflowStatus.SUCCESS)) {
         return ProjectStatus.SUCCESS;
-    }  else {
+    } else {
         return ProjectStatus.FAILED;
     }
 }
@@ -957,8 +969,28 @@ export function getProjectStatus(workflows: { name: string, status: string }[]):
 
 export const Widget = (props: WidgetProps) => {
     const {data} = props;
+    const statusIcons = {
+        "success": success, "failed": failed, "cancelled": cancelled, "on_hold": on_hold, "running": running
+    }
     // console.log(data);
     const projectStatus = getProjectStatus(data.widgetWorkflows.map(wwf => ({status: wwf.status, name: wwf.name})))
+    const jobStatus = (jobStatus: string) => {
+        switch (jobStatus) {
+            case JobStatus.SUCCESS:
+                return statusIcons[JobStatus.SUCCESS];
+            case JobStatus.FAILED:
+                return statusIcons[JobStatus.FAILED];
+            case JobStatus.CANCELLED:
+                return statusIcons[JobStatus.CANCELLED];
+            case JobStatus.ON_HOLD:
+                return statusIcons[JobStatus.ON_HOLD];
+            case JobStatus.RUNNING:
+                return statusIcons[JobStatus.RUNNING]
+            default:
+                return statusIcons[JobStatus.FAILED];
+
+        }
+    }
     return (
         <div className={`${styles.widget} ${styles[projectStatus]}`}>
             <h2><a href={data.repoUrl}>{data.projectName}</a></h2>
@@ -968,16 +1000,15 @@ export const Widget = (props: WidgetProps) => {
                 <div>{data.actorName}</div>
                 <div><a href={data.revisionUrl}>{data.commitSubject}</a></div>
             </div>
-            {/*<div>{data.revision}</div>*/}
             <div className={styles.workflowsContainer}>{data.widgetWorkflows.map((wf, index) => {
                 return (
                     <div className={styles.workflowContainer} key={index}>
                         <div className={styles.workflowName}><a href={wf.url}>{wf.name}</a></div>
                         <div className={styles.jobs}>{wf.jobs.map((job, index) => {
                             return (
-                                <a href={job.url} title={job.name}>
-                                    <div key={index}>
-                                        <object data={checkmark} type="image/svg+xml" className={styles.svg}>Checkmark</object>
+                                <a key={index} href={job.url} title={job.name}>
+                                    <div>
+                                        <object data={jobStatus(job.status)} type="image/svg+xml" className={styles.svg}>icon</object>
                                     </div>
                                 </a>
                             )
