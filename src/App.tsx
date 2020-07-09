@@ -817,7 +817,37 @@ function App() {
                 const padNumber = (num: number): string => num < 10 ? `0${num}` : `${num}`
                 return `${padNumber((difference.getDate() - 1) * 24 + difference.getHours())}:${padNumber(difference.getMinutes())}:${padNumber(difference.getSeconds())}`;
             }
-            const maybeCreatedAt = latestPipeline?.created_at || "";
+            const getSince = (workflows: any[]): number => {
+                const now = new Date().toISOString();
+                const latestStoppedTime = workflows.every(wf => wf.createdAt && wf.stoppedAt) ? workflows.sort((a, b) => Date.parse(b.stoppedAt) - Date.parse(a.stoppedAt))[0].stoppedAt : now;
+                return (Date.parse(latestStoppedTime) - Date.parse(now));
+            }
+
+            const getFormattedSince = (sinceInMillies: number): string => {
+                const since = new Date(sinceInMillies);
+                const days = since.getDate() - 1;
+                if (days > 0) {
+                    return days  > 1 ? `${days} days ago` :  `${days} day ago`
+                }
+
+                const hours = since.getHours();
+                if (hours > 0) {
+                    return hours  > 1 ? `${hours} hours ago` :  `${hours} hour ago`
+                }
+
+                const minutes = since.getMinutes();
+                if (minutes > 0) {
+                    return minutes  > 1 ? `${minutes} minutes ago` :  `${minutes} minute ago`
+                }
+
+                const seconds = since.getSeconds();
+                if (seconds > 0) {
+                    return seconds  > 1 ? `${seconds} seconds ago` :  `${seconds} second ago`
+                } else {
+                    return "";
+                }
+            }
+
             return {
                 projectName: data.project.toLocaleUpperCase(),
                 pipelineNumber: latestPipeline ? `#${latestPipeline?.number}` : "",
@@ -827,7 +857,7 @@ function App() {
                 repoUrl: latestPipeline?.vcs.origin_repository_url,
                 revisionUrl: `${latestPipeline?.vcs.origin_repository_url}/commit/${latestPipeline?.vcs.revision}`,
                 duration: getFormattedDuration(getDuration(widgetWorkflows)),
-                since: "10 days ago",
+                since: getFormattedSince(getSince(widgetWorkflows)),
                 widgetWorkflows: widgetWorkflows
 
             } as WidgetData;
