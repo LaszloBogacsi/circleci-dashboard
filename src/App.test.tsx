@@ -232,3 +232,31 @@ test('can determine status from multiple different workflows, and the latest ove
     const status = getProjectStatus(workflows);
     expect(status).toEqual("cancelled");
 });
+
+test('blah', () => {
+
+    const getDuration = (workflows: any[]): number => {
+        if (!workflows.length) return 0;
+
+        const earliestStartTime = workflows.sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))[0].createdAt;
+        const latestStoppedTime = workflows.every(wf => wf.createdAt && wf.stoppedAt) ? workflows.sort((a, b) => Date.parse(b.stoppedAt) - Date.parse(a.stoppedAt))[0].stoppedAt : new Date().toISOString();
+        return (Date.parse(latestStoppedTime) - Date.parse(earliestStartTime));
+    }
+
+    const getFormattedDuration = (durationInMillies: number): string => {
+        const difference = new Date(durationInMillies);
+        const padNumber = (num: number): string => num < 10 ? `0${num}` : `${num}`
+        return `${padNumber((difference.getDate() - 1) * 24 + difference.getHours())}:${padNumber(difference.getMinutes())}:${padNumber(difference.getSeconds())}`;
+    }
+
+    let workflows1 = [
+        {id: "a", createdAt: "2020-07-01T16:55:17Z", stoppedAt: "2020-07-01T17:06:30Z"},
+        {id: "b", createdAt: "2020-07-01T17:05:17Z", stoppedAt: "2020-07-01T18:04:20Z"},
+    ];
+
+    let duration = getDuration(workflows1);
+    console.log(duration);
+    let formattedDuration = getFormattedDuration(duration);
+    console.log(formattedDuration);
+
+});

@@ -777,20 +777,8 @@ function App() {
 
     const processAPIData: (apiData: ApiData[]) => WidgetData[] = apiData => {
         return apiData.map(data => {
-            const latestPipeline = data.pipelines.length ? data.pipelines[0] : undefined
-            const maybeCreatedAt = latestPipeline?.created_at || "";
-            return {
-                projectName: data.project.toLocaleUpperCase(),
-                pipelineNumber: latestPipeline ? `#${latestPipeline?.number}` : "",
-                branch: latestPipeline?.vcs.branch,
-                commitSubject: latestPipeline?.vcs.commit.subject,
-                actorName: latestPipeline?.trigger.actor.login,
-                repoUrl: latestPipeline?.vcs.origin_repository_url,
-                revisionUrl: `${latestPipeline?.vcs.origin_repository_url}/commit/${latestPipeline?.vcs.revision}`,
-                projectStatus: "", // calculate from workflow states
-                duration: `${Date.now() - Date.parse(maybeCreatedAt)}`,
-                since: "10 days ago",
-                widgetWorkflows: data.workflows.map(workflow => {
+            const getWidgetWorkflows: (data: ApiData) => WidgetWorkflow[] = (data: ApiData) => {
+                return data.workflows.map(workflow => {
                     return {
                         name: workflow.name,
                         id: workflow.id,
@@ -812,7 +800,35 @@ function App() {
                         })
 
                     } as WidgetWorkflow
-                })
+                });
+            }
+            const widgetWorkflows = getWidgetWorkflows(data);
+            const latestPipeline = data.pipelines.length ? data.pipelines[0] : undefined
+            const getDuration = (workflows: any[]): number => {
+                if (!workflows.length) return 0;
+
+                const earliestStartTime = workflows.sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))[0].createdAt;
+                const latestStoppedTime = workflows.every(wf => wf.createdAt && wf.stoppedAt) ? workflows.sort((a, b) => Date.parse(b.stoppedAt) - Date.parse(a.stoppedAt))[0].stoppedAt : new Date().toISOString();
+                return (Date.parse(latestStoppedTime) - Date.parse(earliestStartTime));
+            }
+
+            const getFormattedDuration = (durationInMillies: number): string => {
+                const difference = new Date(durationInMillies);
+                const padNumber = (num: number): string => num < 10 ? `0${num}` : `${num}`
+                return `${padNumber((difference.getDate() - 1) * 24 + difference.getHours())}:${padNumber(difference.getMinutes())}:${padNumber(difference.getSeconds())}`;
+            }
+            const maybeCreatedAt = latestPipeline?.created_at || "";
+            return {
+                projectName: data.project.toLocaleUpperCase(),
+                pipelineNumber: latestPipeline ? `#${latestPipeline?.number}` : "",
+                branch: latestPipeline?.vcs.branch,
+                commitSubject: latestPipeline?.vcs.commit.subject,
+                actorName: latestPipeline?.trigger.actor.login,
+                repoUrl: latestPipeline?.vcs.origin_repository_url,
+                revisionUrl: `${latestPipeline?.vcs.origin_repository_url}/commit/${latestPipeline?.vcs.revision}`,
+                duration: getFormattedDuration(getDuration(widgetWorkflows)),
+                since: "10 days ago",
+                widgetWorkflows: widgetWorkflows
 
             } as WidgetData;
         })
@@ -863,7 +879,6 @@ interface WidgetData {
     actorName: string
     repoUrl: string
     revisionUrl: string
-    projectStatus: string
     duration: string
     since: string
     widgetWorkflows: WidgetWorkflow[]
