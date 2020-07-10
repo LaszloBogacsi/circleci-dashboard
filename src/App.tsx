@@ -9,6 +9,9 @@ import on_hold from './img/on_hold.svg'
 import styles from './widget.module.css';
 import wcStyles from './widget-container.module.css';
 
+import axios from 'axios';
+import {BrowserRouter as Router, Route, Link} from 'react-router-dom';
+
 interface ApiData {
     project: string
     pipelines: Pipeline[]
@@ -16,21 +19,28 @@ interface ApiData {
     jobs: { workflowId: string, jobs: Job[] }[]
 }
 
+const inMockMode = true;
+
 function useApiData() {
     const initialApiData: ApiData[] = [];
 
     async function getApiData(): Promise<ApiData[]> {
-        const projects = ["atsdcf-services"];
+        const projects = ["atsdcf-services", "adtech-cia"];
 
-        const pipelines = await getPipelinesForProject();
-        const workflows = await getWorkflowsForPipeline();
-        const jobs = await getJobsForWorkflow();
-        return [1, 2, 3, 4, 5, 6, 7, 8].flatMap(num => projects.map(project => ({
-            project,
-            pipelines: pipelines.items,
-            workflows: workflows.items,
-            jobs: [{workflowId: "ae768c71-303e-44e0-a223-5bc3d7a35354", jobs: jobs.items}]
-        })));
+        if (inMockMode) {
+            const pipelines = await getPipelinesForProject();
+            const workflows = await getWorkflowsForPipeline();
+            const jobs = await getJobsForWorkflow();
+            return [1].flatMap(num => projects.map(project => ({
+                project,
+                pipelines: pipelines.items,
+                workflows: workflows.items,
+                jobs: [{workflowId: "ae768c71-303e-44e0-a223-5bc3d7a35354", jobs: jobs.items}]
+            })));
+        } else {
+            return await get<ApiData[]>("http://localhost:4000/data", {projects: projects.join(",")});
+            ;
+        }
     }
 
     const [apiData, setApiData] = useState(initialApiData);
@@ -739,41 +749,90 @@ function useApiData() {
 
 }
 
+async function get<T>(url: string, params: { [key: string]: string } = {}): Promise<T> {
+    const result = await axios.get(url, {params});
+    return result.data as T
+}
+
 function App() {
     const initial: Collaboration[] = [];
     const [options, setOptions] = useState(initial);
     const [apiToken, setApiToken] = useState("");
     const initialOrg = {} as Collaboration
     const [selectedOrg, setSelectedOrg] = useState(initialOrg);
-    const apiData = useApiData();
 
     useEffect(() => {
+        async function getOptions(): Promise<Collaboration[]> {
+            //afb2b32c1b1d5edc6704ce0035089fa9a9a03963
+            console.log(apiToken);
+            return get<Collaboration[]>("http://localhost:4000/options")
+        }
+
         (async () => setOptions(await getOptions()))()
-    }, [])
+    }, [apiToken])
 
     // console.log(apiData);
 
-    async function getOptions(): Promise<Collaboration[]> {
-        // https://circleci.com/api/v2/me/collaborations
-        // Circle-Token: <token>
-        return [{
-            "vcs_type": "github",
-            "name": "diok22",
-            "avatar_url": "https://avatars2.githubusercontent.com/u/19917827?v=4"
-        }, {
-            "vcs_type": "github",
-            "name": "ITV",
-            "avatar_url": "https://avatars1.githubusercontent.com/u/625148?v=4"
-        }, {
-            "vcs_type": "github",
-            "name": "LaszloBogacsi",
-            "avatar_url": "https://avatars1.githubusercontent.com/u/15179731?v=4"
-        }, {
-            "vcs_type": "github",
-            "name": "makersacademy",
-            "avatar_url": "https://avatars2.githubusercontent.com/u/3636186?v=4"
-        }];
-    }
+    // async function getOptions(): Promise<Collaboration[]> {
+    //     // https://circleci.com/api/v2/me/collaborations
+    //     // Circle-Token: <token>
+    //     return [{
+    //         "vcs_type": "github",
+    //         "name": "diok22",
+    //         "avatar_url": "https://avatars2.githubusercontent.com/u/19917827?v=4"
+    //     }, {
+    //         "vcs_type": "github",
+    //         "name": "ITV",
+    //         "avatar_url": "https://avatars1.githubusercontent.com/u/625148?v=4"
+    //     }, {
+    //         "vcs_type": "github",
+    //         "name": "LaszloBogacsi",
+    //         "avatar_url": "https://avatars1.githubusercontent.com/u/15179731?v=4"
+    //     }, {
+    //         "vcs_type": "github",
+    //         "name": "makersacademy",
+    //         "avatar_url": "https://avatars2.githubusercontent.com/u/3636186?v=4"
+    //     }];
+    // }
+
+    return (
+        <Router>
+
+            <div className="App">
+                <header className="App-header">
+                    CIRCLECI BUILD DASHBOARD
+                </header>
+                <div className={styles.inputSelectors}>
+                    <OrgSelector options={options} selectedOrg={setSelectedOrg} previouslySelected={getSelectedOrgFromLocalStorage()}/>
+                    <APITokenInput setApiToken={setApiToken}/>
+                </div>
+
+                <Route path="/" exact component={Dashboard}/>
+                <Route path="/add" exact component={AddProjects}/>
+
+            </div>
+        </Router>
+
+    );
+}
+
+export const AddProjects = () => {
+    const projects = ["Project 1", "Project 1", "Project 1"];
+    return (
+        <div>
+            <input type="text"/>
+            <ul>
+                {projects.map((project, index) => <li key={index}>{project}</li>)}
+            </ul>
+            <Link to="/"><button>Save</button></Link>
+            <Link to="/"><button>Back</button></Link>
+
+        </div>
+    );
+};
+
+function Dashboard() {
+    const apiData = useApiData();
 
     const processAPIData: (apiData: ApiData[]) => WidgetData[] = apiData => {
         return apiData.map(data => {
@@ -815,37 +874,32 @@ function App() {
             const getFormattedDuration = (durationInMillies: number): string => {
                 const difference = new Date(durationInMillies);
                 const padNumber = (num: number): string => num < 10 ? `0${num}` : `${num}`
-                return `${padNumber((difference.getDate() - 1) * 24 + difference.getHours())}:${padNumber(difference.getMinutes())}:${padNumber(difference.getSeconds())}`;
+                return `${padNumber((difference.getUTCDate() - 1) * 24 + difference.getUTCHours())}:${padNumber(difference.getUTCMinutes())}:${padNumber(difference.getUTCSeconds())}`;
             }
             const getSince = (workflows: any[]): number => {
+                if (!workflows.length) return 0;
+
                 const now = new Date().toISOString();
                 const latestStoppedTime = workflows.every(wf => wf.createdAt && wf.stoppedAt) ? workflows.sort((a, b) => Date.parse(b.stoppedAt) - Date.parse(a.stoppedAt))[0].stoppedAt : now;
-                return (Date.parse(latestStoppedTime) - Date.parse(now));
+                return (Date.parse(now) - Date.parse(latestStoppedTime));
             }
 
             const getFormattedSince = (sinceInMillies: number): string => {
                 const since = new Date(sinceInMillies);
+                const months = since.getMonth();
+                if (months > 0) return months > 1 ? `${months} months ago` : `${months} month ago`
+
                 const days = since.getDate() - 1;
-                if (days > 0) {
-                    return days  > 1 ? `${days} days ago` :  `${days} day ago`
-                }
+                if (days > 0) return days > 1 ? `${days} days ago` : `${days} day ago`
 
                 const hours = since.getHours();
-                if (hours > 0) {
-                    return hours  > 1 ? `${hours} hours ago` :  `${hours} hour ago`
-                }
+                if (hours > 0) return hours > 1 ? `${hours} hours ago` : `${hours} hour ago`
 
                 const minutes = since.getMinutes();
-                if (minutes > 0) {
-                    return minutes  > 1 ? `${minutes} minutes ago` :  `${minutes} minute ago`
-                }
+                if (minutes > 0) return minutes > 1 ? `${minutes} minutes ago` : `${minutes} minute ago`
 
                 const seconds = since.getSeconds();
-                if (seconds > 0) {
-                    return seconds  > 1 ? `${seconds} seconds ago` :  `${seconds} second ago`
-                } else {
-                    return "";
-                }
+                return seconds > 0 ? seconds > 1 ? `${seconds} seconds ago` : `${seconds} second ago` : "";
             }
 
             return {
@@ -864,21 +918,16 @@ function App() {
         })
     }
 
-
     return (
-        <div className="App">
-            <header className="App-header">
-                CIRCLECI BUILD DASHBOARD
-            </header>
-            <div className={styles.inputSelectors}>
-                <OrgSelector options={options} selectedOrg={setSelectedOrg} previouslySelected={getSelectedOrgFromLocalStorage()}/>
-                <APITokenInput setApiToken={setApiToken}/>
+        <div>
+            <div>
+                <h1>PROJECTS</h1>
+                <Link to="/add"><button>Add</button></Link>
             </div>
-            <h1>PROJECTS</h1>
             <WidgetContainer widgetData={processAPIData(apiData)}/>
         </div>
     );
-}
+};
 
 
 interface WidgetJob {
