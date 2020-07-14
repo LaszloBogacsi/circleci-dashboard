@@ -137,14 +137,14 @@ a:hover {
 
 }
 
-.tokenInput input{
+.tokenInput input {
     background-color: transparent;
     height: 100%;
     width: 100%;
     border: none;
     color: var(--secondary-text-color);
     cursor: pointer;
-    outline:none;
+    outline: none;
 }
 
 .tokenInput button {
@@ -175,4 +175,42 @@ h1 {
 .dashboardHeader object {
     width: 1.3rem;
     height: 1.3rem;
+}
+
+.selectedProjectList h1 {
+    text-align: left;
+    display: block;
+}
+
+
+.selectedProjectList object {
+    width: 1.3rem;
+    height: 1.3rem;
+}
+.selectedProjectList .cellAction {
+    cursor: pointer;
+}
+
+.selectedProjectList table tr td:nth-child(3):hover {
+    background-color: dimgrey;
+}
+
+.selectedProjectList {
+    color: var(--primary-text-color);
+}
+
+.selectedProjectList th {
+    color: var(--secondary-text-color);
+}
+
+.selectedProjectList table, th, td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--secondary-text-color);
+    border-collapse: collapse;
+}
+
+.selectedProjectList table {
+    min-width: 500px;
+    width: 80%;
+    margin: auto;
 }

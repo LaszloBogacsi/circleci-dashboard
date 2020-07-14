@@ -6,6 +6,8 @@ import cancelled from './img/cancelled.svg'
 import running from './img/running.svg'
 import on_hold from './img/on_hold.svg'
 import edit from './img/edit.svg'
+import add from './img/plus.svg'
+import removeIcon from './img/delete.svg'
 
 import styles from './widget.module.css';
 import wcStyles from './widget-container.module.css';
@@ -3489,10 +3491,25 @@ interface SelectedProjectsListProps {
 export const SelectedProjectsList = (props: SelectedProjectsListProps) => {
     const {data, remove} = props;
     return (
-        <div>
-            <ul>
-                {data.map((item, index) => <li key={index}>{item.name}-{item.branch} <button onClick={() => remove(item)}>X</button> </li>)}
-            </ul>
+        <div className={styles.selectedProjectList}>
+            <h1>Manage Projects</h1>
+            <table>
+                <tr>
+                    <th>PROJECT</th>
+                    <th>BRANCH</th>
+                    <th>REMOVE</th>
+                </tr>
+                {data.map((item, index) => {
+                    return (
+                        <tr key={index}>
+                            <td>{item.name}</td>
+                            <td>{item.branch}</td>
+                            <td><div className={styles.cellAction} onClick={() => remove(item)}><object data={removeIcon} type="image/svg+xml" className={styles.svg}>icon</object></div></td>
+                        </tr>
+                    )
+                })}
+
+            </table>
         </div>
     );
 };

@@ -6,7 +6,7 @@ html, body, #root {
   --cancelled: #444444;
   --on-hold: #8267e4;
   --secondary-text-color: #a9a9a9;
-  --primary-text-color: whitesmoke;
+  --primary-text-color: #f5f5f5;
   --app-background-color: #262626;
   --input-background-color: #0a0a0a;
 }
