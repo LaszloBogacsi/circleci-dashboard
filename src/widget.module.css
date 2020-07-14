@@ -113,7 +113,6 @@ a:hover {
     border: none;
     border-radius: 4px;
     height: 3rem;
-    line-height: 3rem;
     color: var(--secondary-text-color);
     padding: 0 0 0 1rem;
     border-right: 1rem solid transparent;
@@ -126,15 +125,10 @@ a:hover {
     margin-bottom: 0.5rem;
 }
 
-.tokenInputContainer {
-    /*text-align: left;*/
-}
-
 .tokenInput {
     min-width: 20rem;
     display: flex;
     align-items: center;
-
 }
 
 .tokenInput input {
@@ -147,15 +141,9 @@ a:hover {
     outline: none;
 }
 
-.tokenInput button {
-    background-color: transparent;
-    border-radius: 50%;
-    border: 1px solid var(--secondary-text-color);
-    color: var(--secondary-text-color);
+.tokenInput object {
     height: 1.3rem;
     width: 1.3rem;
-    cursor: pointer;
-
 }
 
 h1 {

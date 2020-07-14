@@ -35,12 +35,12 @@ function useApiData(projects: SelectedProject[]) {
             const pipelines = await getPipelinesForProject();
             const workflows = await getWorkflowsForPipeline();
             const jobs = await getJobsForWorkflow();
-            return [1].flatMap(num => projects.map(project => project.name).map(project => ({
+            return projects.map(project => project.name).map(project => ({
                 project,
                 pipelines: pipelines.items,
                 workflows: workflows.items,
                 jobs: [{workflowId: "ae768c71-303e-44e0-a223-5bc3d7a35354", jobs: jobs.items}]
-            })));
+            }));
         } else {
             return await get<ApiData[]>("http://localhost:4000/data", {projects: projects.map(project => `${project.name}|${project.branch}`).join(",")});
         }
@@ -3436,7 +3436,7 @@ function App() {
                 </header>
                 <div className={styles.inputSelectors}>
                     <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
-                    <APITokenInput setApiToken={setApiToken}/>
+                    <APITokenInput setApiToken={setApiToken} />
                 </div>
                 <Route path="/" exact render={() => <Dashboard projects={selectedProjects}/>}/>
                 <Route path="/edit-projects" exact
@@ -3673,7 +3673,7 @@ function Dashboard(props: DashboardProps) {
             <WidgetContainer widgetData={processAPIData(apiData)}/>
         </div>
     );
-};
+}
 
 
 interface WidgetJob {
@@ -3948,11 +3948,12 @@ interface APITokenInputProps {
 }
 
 function APITokenInput(props: APITokenInputProps): ReactElement {
+    const {setApiToken} = props;
     const initialState = "";
     const [inputValue, setInputValue] = useState(initialState);
 
     const onClick: () => void = () => {
-        props.setApiToken(inputValue);
+        setApiToken(inputValue);
         setInputValue(initialState);
     }
     const onInputChange = (event: ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value || "");
@@ -3961,7 +3962,9 @@ function APITokenInput(props: APITokenInputProps): ReactElement {
             <label htmlFor="input">API Token</label>
             <div className={styles.tokenInput}>
                 <input value={inputValue} onChange={onInputChange} type="text" placeholder="circleci api token"/>
-                <button onClick={onClick}>+</button>
+                <div onClick={onClick}>
+                    <object data={addIcon} type="image/svg+xml" className={styles.svg}>icon</object>
+                </div>
             </div>
 
         </div>
