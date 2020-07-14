@@ -3371,12 +3371,12 @@ function App() {
     const [apiToken, setApiToken] = useState("");
     const previouslySelectedOrg = getSelectedOrgFromLocalStorage();
     const initialSelected = previouslySelectedOrg ? previouslySelectedOrg : options.length ? options[0] : {} as Collaboration;
-
     const [selectedOrg, setSelectedOrg] = useState(initialSelected);
+    const previouslySelectedProjects = getSelectedProjectsFromLocalStorage();
+    const initialSelectedProject = previouslySelectedProjects ? previouslySelectedProjects : [] as SelectedProject[];
+    const [selectedProjects, setSelectedProjects] = useState(initialSelectedProject);
 
     useEffect(() => {
-
-
         async function getOptions(): Promise<Collaboration[]> {
             //afb2b32c1b1d5edc6704ce0035089fa9a9a03963
             console.log(apiToken);
@@ -3398,7 +3398,10 @@ function App() {
         loadOptions();
     }, [apiToken])
 
-    // console.log(apiData);
+    const setFollowedSelectedProjects = (projects: SelectedProject[]) => {
+        setSelectedProjects(projects);
+        saveSelectedProjectsToLocalStorage(projects);
+    }
 
     async function getOptionsData(): Promise<Collaboration[]> {
         // https://circleci.com/api/v2/me/collaborations
@@ -3424,7 +3427,6 @@ function App() {
 
     return (
         <Router>
-
             <div className="App">
                 <header className="App-header">
                     CIRCLECI BUILD DASHBOARD
@@ -3433,13 +3435,10 @@ function App() {
                     <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
                     <APITokenInput setApiToken={setApiToken}/>
                 </div>
-
                 <Route path="/" exact component={Dashboard}/>
-                <Route path="/add" exact render={() => <AddProjects selectedOrg={selectedOrg}/>}/>
-
+                <Route path="/add" exact render={() => <AddProjects selectedOrg={selectedOrg} selectedProjects={selectedProjects} setSelectedProjects={setFollowedSelectedProjects}/>}/>
             </div>
         </Router>
-
     );
 }
 
@@ -3450,12 +3449,13 @@ interface SelectedProject {
 
 interface AddProjectProps {
     selectedOrg: Collaboration
+    selectedProjects: SelectedProject[]
+    setSelectedProjects: (projects: SelectedProject[]) => void
 }
 
 export const AddProjects = (props: AddProjectProps) => {
-    const {selectedOrg} = props;
-    const initial = [] as SelectedProject[];
-    const [selectedProjects, setSelectedProjects] = useState(initial);
+    const {selectedOrg, selectedProjects, setSelectedProjects} = props;
+
     const projects = useFollowedProjects();
     const processFollowedProjectsData = (followedProjectsData: FollowedProjectsData[]): FollowedProjects[] => {
         return followedProjectsData.filter(followedProject => followedProject.username === selectedOrg.name).map(project => ({
@@ -3887,16 +3887,24 @@ function saveSelectedOrgToLocalStorage(selectedOrg: Collaboration): void {
 }
 
 function getSelectedOrgFromLocalStorage(): Collaboration | undefined {
-    return getFromLocalStorage("circleci-dashboard-collab-storage");
+    return getFromLocalStorage<Collaboration>("circleci-dashboard-collab-storage");
+}
+
+function getSelectedProjectsFromLocalStorage(): SelectedProject[] | undefined {
+    return getFromLocalStorage<SelectedProject[]>("circleci-dashboard-projects-storage");
+}
+
+function saveSelectedProjectsToLocalStorage(selectedProjects: SelectedProject[]): void {
+    saveToLocalStorage("circleci-dashboard-projects-storage", JSON.stringify(selectedProjects));
 }
 
 function saveToLocalStorage(key: string, value: string) {
     window.localStorage.setItem(key, value);
 }
 
-function getFromLocalStorage(key: string): Collaboration | undefined {
+function getFromLocalStorage<T>(key: string): T | undefined {
     const item = localStorage.getItem(key)
-    return item !== null ? JSON.parse(item) as any as Collaboration : undefined;
+    return item !== null ? JSON.parse(item) as any as T : undefined;
 }
 
 interface APITokenInputProps {
