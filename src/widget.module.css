@@ -146,6 +146,18 @@ a:hover {
     width: 1.3rem;
 }
 
+.orgSelector {
+    display: flex;
+    align-items: center;
+}
+
+.orgSelector img {
+    margin-left: 1rem;
+    height: 3rem;
+    width: 3rem;
+    clip-path: circle(1.5rem at center);
+}
+
 h1 {
     color: var(--secondary-text-color);
     display: inline-block;
@@ -169,6 +181,7 @@ h1 {
     width: 1.3rem;
     height: 1.3rem;
 }
+
 .selectedProjectList .cellAction {
     cursor: pointer;
 }
@@ -198,6 +211,7 @@ h1 {
     width: 80%;
     margin: auto;
 }
+
 .selectedProjectList td {
     width: 33%
 }
@@ -214,8 +228,9 @@ h1 {
     padding: 0;
     border-collapse: collapse;
 }
+
 .projectSelector td {
-   width: calc(100% / 3)
+    width: calc(100% / 3)
 }
 
 .projectSelector select {
@@ -238,7 +253,7 @@ h1 {
 }
 
 
-.projectSelector table tr  {
+.projectSelector table tr {
     background-color: #444444;
 }
 
@@ -254,6 +269,7 @@ h1 {
     align-items: center;
 
 }
+
 .addProjectsHeader object {
     width: 1.8rem;
     height: 1.8rem;

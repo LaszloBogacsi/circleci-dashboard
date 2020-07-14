@@ -3890,12 +3890,13 @@ function OrgSelector(props: OrgSelectorProps): ReactElement {
     return (
         <div>
             <label htmlFor="select">ORG</label>
-            <div>
+            <div className={styles.orgSelector}>
                 <Select
                     value={selectedOrg.name}
                     onChange={handleChange}>
                     {options.map((option, index) => <option key={index} value={option.name}>{option.name}</option>)}
                 </Select>
+                <img src={selectedOrg.avatar_url} alt="org-avatar"/>
             </div>
 
         </div>
