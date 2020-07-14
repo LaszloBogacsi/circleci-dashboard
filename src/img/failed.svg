@@ -3,7 +3,7 @@
      viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
 	    <style>
         #failed {
-        fill: #FFF5F5F5;
+        fill: #F5F5F5;
         }
     </style>
     <g><g><path d="M256,0C114.848,0,0,114.848,0,256s114.848,256,256,256s256-114.848,256-256S397.152,0,256,0z M256,480

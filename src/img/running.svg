@@ -3,7 +3,7 @@
      viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
 	<style>
 		#running {
-		fill: #FFF5F5F5;
+		fill: #F5F5F5;
 		 animation: running-spin infinite 3s linear;
 		}
 
