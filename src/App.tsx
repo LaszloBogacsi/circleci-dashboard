@@ -5,6 +5,7 @@ import failed from './img/failed.svg'
 import cancelled from './img/cancelled.svg'
 import running from './img/running.svg'
 import on_hold from './img/on_hold.svg'
+import edit from './img/edit.svg'
 
 import styles from './widget.module.css';
 import wcStyles from './widget-container.module.css';
@@ -38,7 +39,7 @@ function useApiData(projects: SelectedProject[]) {
                 jobs: [{workflowId: "ae768c71-303e-44e0-a223-5bc3d7a35354", jobs: jobs.items}]
             })));
         } else {
-            return await get<ApiData[]>("http://localhost:4000/data", {projects: projects.join(",")});
+            return await get<ApiData[]>("http://localhost:4000/data", {projects: projects.map(project => `${project.name}|${project.branch}`).join(",")});
         }
     }
 
@@ -3435,7 +3436,7 @@ function App() {
                     <APITokenInput setApiToken={setApiToken}/>
                 </div>
                 <Route path="/" exact render={() => <Dashboard projects={selectedProjects}/>}/>
-                <Route path="/add" exact render={() => <AddProjects selectedOrg={selectedOrg} selectedProjects={selectedProjects} setSelectedProjects={setFollowedSelectedProjects}/>}/>
+                <Route path="/edit-projects" exact render={() => <AddProjects selectedOrg={selectedOrg} selectedProjects={selectedProjects} setSelectedProjects={setFollowedSelectedProjects}/>}/>
             </div>
         </Router>
     );
@@ -3575,6 +3576,7 @@ function Dashboard(props: DashboardProps) {
             }
             const widgetWorkflows = getWidgetWorkflows(data);
             const latestPipeline = data.pipelines.length ? data.pipelines[0] : undefined
+            console.log(apiData);
             const getDuration = (workflows: any[]): number => {
                 if (!workflows.length) return 0;
 
@@ -3618,7 +3620,7 @@ function Dashboard(props: DashboardProps) {
                 projectName: data.project.toLocaleUpperCase(),
                 pipelineNumber: latestPipeline ? `#${latestPipeline?.number}` : "",
                 branch: latestPipeline?.vcs.branch,
-                commitSubject: latestPipeline?.vcs.commit.subject,
+                commitSubject: latestPipeline?.vcs.commit?.subject,
                 actorName: latestPipeline?.trigger.actor.login,
                 repoUrl: latestPipeline?.vcs.origin_repository_url,
                 revisionUrl: `${latestPipeline?.vcs.origin_repository_url}/commit/${latestPipeline?.vcs.revision}`,
@@ -3632,10 +3634,12 @@ function Dashboard(props: DashboardProps) {
 
     return (
         <div>
-            <div>
+            <div className={styles.dashboardHeader}>
                 <h1>PROJECTS</h1>
-                <Link to="/add">
-                    <button>Add</button>
+                <Link to="/edit-projects">
+                    <div title="Manage Projects">
+                        <object data={edit} type="image/svg+xml" className={styles.svg}>icon</object>
+                    </div>
                 </Link>
             </div>
             <WidgetContainer widgetData={processAPIData(apiData)}/>
@@ -3724,7 +3728,7 @@ interface Pipeline {
     state: string
     trigger: { actor: { login: string, avatar_url: string }, received_at: string, type: string }
     updated_at: string
-    vcs: { branch: string, commit: { body: string, subject: string }, origin_repository_url: string, provider_name: string, revision: string, target_repository_url: string }
+    vcs: { branch: string, commit?: { body: string, subject: string }, origin_repository_url: string, provider_name: string, revision: string, target_repository_url: string }
 }
 
 interface WidgetProps {

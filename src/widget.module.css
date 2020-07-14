@@ -159,6 +159,20 @@ a:hover {
 }
 
 h1 {
-    text-align: left;
     color: var(--secondary-text-color);
+    display: inline-block;
+    margin-right: 1rem;
+}
+
+.dashboardHeader {
+    text-align: left;
+}
+
+.dashboardHeader a {
+    display: inline-block;
+}
+
+.dashboardHeader object {
+    width: 1.3rem;
+    height: 1.3rem;
 }

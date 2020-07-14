@@ -5,7 +5,7 @@ html, body, #root {
   --running: #31447c;
   --cancelled: #444444;
   --on-hold: #8267e4;
-  --secondary-text-color: darkgrey;
+  --secondary-text-color: #a9a9a9;
   --primary-text-color: whitesmoke;
   --app-background-color: #262626;
   --input-background-color: #0a0a0a;
