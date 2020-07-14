@@ -762,8 +762,8 @@ interface FollowedProjectsData {
 }
 
 interface FollowedProjects {
-    projectName: string
     branches: string[]
+    projectName: string
 }
 
 function useFollowedProjects() {
@@ -772,7 +772,6 @@ function useFollowedProjects() {
     async function getApiData(): Promise<FollowedProjectsData[]> {
         if (inMockMode) {
             return await getFollowedProjects();
-
 
         } else {
             return await get<FollowedProjectsData[]>("http://localhost:4000/projects");
@@ -3370,42 +3369,58 @@ function App() {
     const initial: Collaboration[] = [];
     const [options, setOptions] = useState(initial);
     const [apiToken, setApiToken] = useState("");
-    const initialOrg = {} as Collaboration
-    const [selectedOrg, setSelectedOrg] = useState(initialOrg);
+    const previouslySelectedOrg = getSelectedOrgFromLocalStorage();
+    const initialSelected = previouslySelectedOrg ? previouslySelectedOrg : options.length ? options[0] : {} as Collaboration;
+
+    const [selectedOrg, setSelectedOrg] = useState(initialSelected);
 
     useEffect(() => {
+
+
         async function getOptions(): Promise<Collaboration[]> {
             //afb2b32c1b1d5edc6704ce0035089fa9a9a03963
             console.log(apiToken);
-            return get<Collaboration[]>("http://localhost:4000/options")
+            if (inMockMode) {
+                return getOptionsData();
+            } else {
+                return get<Collaboration[]>("http://localhost:4000/options")
+            }
         }
 
-        (async () => setOptions(await getOptions()))()
+        const loadOptions = async () => {
+            let collaborations = await getOptions();
+            setOptions(collaborations);
+            if (!previouslySelectedOrg) {
+                setSelectedOrg(collaborations[0])
+            }
+
+        }
+        loadOptions();
     }, [apiToken])
 
     // console.log(apiData);
 
-    // async function getOptions(): Promise<Collaboration[]> {
-    //     // https://circleci.com/api/v2/me/collaborations
-    //     // Circle-Token: <token>
-    //     return [{
-    //         "vcs_type": "github",
-    //         "name": "diok22",
-    //         "avatar_url": "https://avatars2.githubusercontent.com/u/19917827?v=4"
-    //     }, {
-    //         "vcs_type": "github",
-    //         "name": "ITV",
-    //         "avatar_url": "https://avatars1.githubusercontent.com/u/625148?v=4"
-    //     }, {
-    //         "vcs_type": "github",
-    //         "name": "LaszloBogacsi",
-    //         "avatar_url": "https://avatars1.githubusercontent.com/u/15179731?v=4"
-    //     }, {
-    //         "vcs_type": "github",
-    //         "name": "makersacademy",
-    //         "avatar_url": "https://avatars2.githubusercontent.com/u/3636186?v=4"
-    //     }];
-    // }
+    async function getOptionsData(): Promise<Collaboration[]> {
+        // https://circleci.com/api/v2/me/collaborations
+        // Circle-Token: <token>
+        return [{
+            "vcs_type": "github",
+            "name": "diok22",
+            "avatar_url": "https://avatars2.githubusercontent.com/u/19917827?v=4"
+        }, {
+            "vcs_type": "github",
+            "name": "ITV",
+            "avatar_url": "https://avatars1.githubusercontent.com/u/625148?v=4"
+        }, {
+            "vcs_type": "github",
+            "name": "LaszloBogacsi",
+            "avatar_url": "https://avatars1.githubusercontent.com/u/15179731?v=4"
+        }, {
+            "vcs_type": "github",
+            "name": "makersacademy",
+            "avatar_url": "https://avatars2.githubusercontent.com/u/3636186?v=4"
+        }];
+    }
 
     return (
         <Router>
@@ -3415,12 +3430,12 @@ function App() {
                     CIRCLECI BUILD DASHBOARD
                 </header>
                 <div className={styles.inputSelectors}>
-                    <OrgSelector options={options} selectedOrg={setSelectedOrg} previouslySelected={getSelectedOrgFromLocalStorage()}/>
+                    <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
                     <APITokenInput setApiToken={setApiToken}/>
                 </div>
 
                 <Route path="/" exact component={Dashboard}/>
-                <Route path="/add" exact component={AddProjects}/>
+                <Route path="/add" exact render={() => <AddProjects selectedOrg={selectedOrg}/>}/>
 
             </div>
         </Router>
@@ -3433,14 +3448,19 @@ interface SelectedProject {
     branch: string
 }
 
-export const AddProjects = () => {
+interface AddProjectProps {
+    selectedOrg: Collaboration
+}
+
+export const AddProjects = (props: AddProjectProps) => {
+    const {selectedOrg} = props;
     const initial = [] as SelectedProject[];
     const [selectedProjects, setSelectedProjects] = useState(initial);
     const projects = useFollowedProjects();
     const processFollowedProjectsData = (followedProjectsData: FollowedProjectsData[]): FollowedProjects[] => {
-        return followedProjectsData.map(project => ({
+        return followedProjectsData.filter(followedProject => followedProject.username === selectedOrg.name).map(project => ({
+            branches: Object.keys(project.branches),
             projectName: project.reponame,
-            branches: Object.keys(project.branches)
         }));
     }
 
@@ -3486,15 +3506,13 @@ function ProjectSelector(props: ProjectSelectorProps) {
     const {data, add} = props;
     const [selectedProject, setSelectedProject] = useState("");
     const [selectedBranch, setSelectedBranch] = useState("");
-    console.log(data);
     useEffect(() => {
         if (data.length) {
             setSelectedProject(data[0].projectName);
             setSelectedBranch(data[0].branches[0]);
         }
     }, [data])
-    console.log(selectedProject);
-    console.log(selectedBranch);
+
     return (
         <div>
             <label htmlFor="select">PROJECT</label>
@@ -3821,29 +3839,16 @@ export default App;
 
 interface OrgSelectorProps {
     options: Collaboration[]
-    selectedOrg: (collaboration: Collaboration) => void
-    previouslySelected?: Collaboration
+    setSelectedOrg: (collaboration: Collaboration) => void
+    selectedOrg: Collaboration
 }
 
 function OrgSelector(props: OrgSelectorProps): ReactElement {
-    const {options, previouslySelected} = props;
-    const initialSelected = previouslySelected ? previouslySelected : options.length ? options[0] : {} as Collaboration;
-    console.log(initialSelected);
-    const [selected, setSelected] = useState(initialSelected);
-    console.log(selected);
+    const {options, setSelectedOrg, selectedOrg} = props;
 
-    useEffect(() => {
-        if (!previouslySelected && options.length) {
-            setSelected(options[0]);
-        }
-    }, [options, previouslySelected])
-    if (!previouslySelected && selected && selected.name) {
-        saveSelectedOrgToLocalStorage(selected);
-    }
     const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
         let collaboration = options.find(option => option.name === event.target.value)!;
-        console.log(collaboration);
-        setSelected(collaboration);
+        setSelectedOrg(collaboration);
         saveSelectedOrgToLocalStorage(collaboration);
     }
     return (
@@ -3851,7 +3856,7 @@ function OrgSelector(props: OrgSelectorProps): ReactElement {
             <label htmlFor="select">ORG</label>
             <div>
                 <Select
-                    value={selected.name}
+                    value={selectedOrg.name}
                     onChange={handleChange}>
                     {options.map((option, index) => <option key={index} value={option.name}>{option.name}</option>)}
                 </Select>
