@@ -6,7 +6,7 @@ import cancelled from './img/cancelled.svg'
 import running from './img/running.svg'
 import on_hold from './img/on_hold.svg'
 import edit from './img/edit.svg'
-import add from './img/plus.svg'
+import addIcon from './img/plus.svg'
 import removeIcon from './img/delete.svg'
 
 import styles from './widget.module.css';
@@ -3497,7 +3497,7 @@ export const SelectedProjectsList = (props: SelectedProjectsListProps) => {
                 <tr>
                     <th>PROJECT</th>
                     <th>BRANCH</th>
-                    <th>REMOVE</th>
+                    <th>ACTION</th>
                 </tr>
                 {data.map((item, index) => {
                     return (
@@ -3531,28 +3531,28 @@ function ProjectSelector(props: ProjectSelectorProps) {
     }, [data])
 
     return (
-        <div>
-            <label htmlFor="select">PROJECT</label>
-            <div>
-                <Select value={selectedProject} onChange={(event: ChangeEvent<HTMLSelectElement> ) => {
-                    console.log(event.target.value);
-                    setSelectedProject(event.target.value);
-                }}>
-                    {data.map((option, index) => <option key={index} value={option.projectName}>{option.projectName}</option>)}
-                </Select>
-            </div>
-            <label htmlFor="select">BRANCH</label>
-            <div>
-                <Select value={selectedBranch} onChange={(event: ChangeEvent<HTMLSelectElement> ) => {
-                    console.log(event.target.value);
-                    setSelectedBranch(event.target.value);
-                }}>
-                    {data.find(d => d.projectName === selectedProject) ? data.find(d => d.projectName === selectedProject)!.branches.map((option, index) => <option key={index} value={option}>{option}</option>) : []}
-                </Select>
-            </div>
-
-            <button onClick={() => add({name:selectedProject, branch: selectedBranch})}>Save</button>
-
+        <div className={styles.projectSelector}>
+            <table>
+                <tr>
+                    <td>
+                        <div>
+                            <Select value={selectedProject} onChange={(event: ChangeEvent<HTMLSelectElement> ) => setSelectedProject(event.target.value)}>
+                                {data.map((option, index) => <option key={index} value={option.projectName}>{option.projectName}</option>)}
+                            </Select>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <Select value={selectedBranch} onChange={(event: ChangeEvent<HTMLSelectElement> ) => setSelectedBranch(event.target.value)}>
+                                {data.find(d => d.projectName === selectedProject) ? data.find(d => d.projectName === selectedProject)!.branches.map((option, index) => <option key={index} value={option}>{option}</option>) : []}
+                            </Select>
+                        </div>
+                    </td>
+                    <td>
+                        <div className={styles.cellAction} onClick={() => add({name:selectedProject, branch: selectedBranch})}><object data={addIcon} type="image/svg+xml" className={styles.svg}>icon</object></div>
+                    </td>
+                </tr>
+            </table>
         </div>
     )
 }
