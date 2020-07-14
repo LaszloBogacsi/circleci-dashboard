@@ -21,17 +21,17 @@ interface ApiData {
 
 const inMockMode = true;
 
-function useApiData() {
+function useApiData(projects: SelectedProject[]) {
     const initialApiData: ApiData[] = [];
 
     async function getApiData(): Promise<ApiData[]> {
-        const projects = ["atsdcf-services", "adtech-cia"];
+        // const projects = ["atsdcf-services", "adtech-cia"];
 
         if (inMockMode) {
             const pipelines = await getPipelinesForProject();
             const workflows = await getWorkflowsForPipeline();
             const jobs = await getJobsForWorkflow();
-            return [1].flatMap(num => projects.map(project => ({
+            return [1].flatMap(num => projects.map(project => project.name).map(project => ({
                 project,
                 pipelines: pipelines.items,
                 workflows: workflows.items,
@@ -39,7 +39,6 @@ function useApiData() {
             })));
         } else {
             return await get<ApiData[]>("http://localhost:4000/data", {projects: projects.join(",")});
-            ;
         }
     }
 
@@ -3435,7 +3434,7 @@ function App() {
                     <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
                     <APITokenInput setApiToken={setApiToken}/>
                 </div>
-                <Route path="/" exact component={Dashboard}/>
+                <Route path="/" exact render={() => <Dashboard projects={selectedProjects}/>}/>
                 <Route path="/add" exact render={() => <AddProjects selectedOrg={selectedOrg} selectedProjects={selectedProjects} setSelectedProjects={setFollowedSelectedProjects}/>}/>
             </div>
         </Router>
@@ -3540,8 +3539,13 @@ function ProjectSelector(props: ProjectSelectorProps) {
     )
 }
 
-function Dashboard() {
-    const apiData = useApiData();
+interface DashboardProps {
+    projects: SelectedProject[]
+}
+
+function Dashboard(props: DashboardProps) {
+    const {projects} = props;
+    const apiData = useApiData(projects);
     const processAPIData: (apiData: ApiData[]) => WidgetData[] = apiData => {
         return apiData.map(data => {
             const getWidgetWorkflows: (data: ApiData) => WidgetWorkflow[] = (data: ApiData) => {
