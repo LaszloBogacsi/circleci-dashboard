@@ -14,7 +14,7 @@ import styles from './widget.module.css';
 import wcStyles from './widget-container.module.css';
 
 import axios from 'axios';
-import {BrowserRouter as Router, Link, Route} from 'react-router-dom';
+import {BrowserRouter as Router, Link, Redirect, Route} from 'react-router-dom';
 
 interface ApiData {
     project: string
@@ -3394,15 +3394,7 @@ function App() {
             }
         }
 
-        async function getAuth() {
-            if (inMockMode) {
-                return getOptionsData();
-            } else {
-                get("http://localhost:4000/auth")
-            }
-        }
-
-        const loadOptions = async () => {
+      const loadOptions = async () => {
             let collaborations = await getOptions();
             setOptions(collaborations);
             if (!previouslySelectedOrg) {
@@ -3468,18 +3460,21 @@ function App() {
                 <header className="App-header">
                     CIRCLECI BUILD DASHBOARD
                 </header>
-                <div className={styles.inputSelectors}>
-                    {isLoggedIn ?
-                        <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/> : null
-                    }
-                    <APITokenInput setApiToken={setApiTokenAndLogIn}/>
-                </div>
                 {isLoggedIn ?
-                    <Route path="/" exact render={() => <Dashboard projects={selectedProjects}/>}/> : null }
-                {isLoggedIn ?
-                <Route path="/edit-projects" exact
-                       render={() => <AddProjects selectedOrg={selectedOrg} selectedProjects={selectedProjects} setSelectedProjects={setFollowedSelectedProjects}/>}/> : null
-                }
+                    <div>
+                        <div className={styles.inputSelectors}>
+                            <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
+                            {/*userinfo here*/}
+                            {/*<APITokenInput setApiToken={setApiTokenAndLogIn}/>*/}
+                        </div>
+
+                    </div> : null}
+                <Route path="/" exact render={() => <Dashboard projects={selectedProjects}/>}/>
+                <Route path="/edit-projects" exact render={() => <AddProjects selectedOrg={selectedOrg}
+                                                                              selectedProjects={selectedProjects}
+                                                                              setSelectedProjects={setFollowedSelectedProjects}/>}/>
+                <Route path="/login" exact render={() => <div className={styles.inputSelectors}><APITokenInput setApiToken={setApiTokenAndLogIn}/></div>}/>
+
             </div>
         </Router>
     );
