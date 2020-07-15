@@ -23,13 +23,12 @@ interface ApiData {
     jobs: { workflowId: string, jobs: Job[] }[]
 }
 
-const inMockMode = true;
+const inMockMode = false;
 
 function useApiData(projects: SelectedProject[]) {
     const initialApiData: ApiData[] = [];
 
     async function getApiData(): Promise<ApiData[]> {
-        // const projects = ["atsdcf-services", "adtech-cia"];
 
         if (inMockMode) {
             const pipelines = await getPipelinesForProject();
@@ -3364,7 +3363,12 @@ function useFollowedProjects() {
 }
 
 async function get<T>(url: string, params: { [key: string]: string } = {}): Promise<T> {
-    const result = await axios.get(url, {params});
+    const result = await axios.get(url, {params, withCredentials: true});
+    return result.data as T
+}
+
+async function post<T>(url: string, params: { [key: string]: string } = {}, body = {}): Promise<T> {
+    const result = await axios.post(url, body, {params, withCredentials: true});
     return result.data as T
 }
 
@@ -3378,15 +3382,23 @@ function App() {
     const previouslySelectedProjects = getSelectedProjectsFromLocalStorage();
     const initialSelectedProject = previouslySelectedProjects ? previouslySelectedProjects : [] as SelectedProject[];
     const [selectedProjects, setSelectedProjects] = useState(initialSelectedProject);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
         async function getOptions(): Promise<Collaboration[]> {
-            //afb2b32c1b1d5edc6704ce0035089fa9a9a03963
             console.log(apiToken);
             if (inMockMode) {
                 return getOptionsData();
             } else {
                 return get<Collaboration[]>("http://localhost:4000/options")
+            }
+        }
+
+        async function getAuth() {
+            if (inMockMode) {
+                return getOptionsData();
+            } else {
+                get("http://localhost:4000/auth")
             }
         }
 
@@ -3396,10 +3408,21 @@ function App() {
             if (!previouslySelectedOrg) {
                 setSelectedOrg(collaborations[0])
             }
+        }
+        const loadAuth = async () => {
+            if (inMockMode) {
+                return setIsLoggedIn(true);
+            } else {
+                await get("http://localhost:4000/auth")
+                return setIsLoggedIn(true);
+            }
 
         }
-        loadOptions();
-    }, [apiToken])
+        loadAuth();
+        if (isLoggedIn) {
+            loadOptions();
+        }
+    }, [isLoggedIn])
 
     const setFollowedSelectedProjects = (projects: SelectedProject[]) => {
         setSelectedProjects(projects);
@@ -3428,6 +3451,17 @@ function App() {
         }];
     }
 
+    const setApiTokenAndLogIn = (token: string) => {
+        setApiToken(token);
+
+        async function login() {
+            await post("http://localhost:4000/login", {}, {token});
+            setIsLoggedIn(true)
+        }
+
+        login();
+    }
+
     return (
         <Router>
             <div className="App">
@@ -3435,12 +3469,17 @@ function App() {
                     CIRCLECI BUILD DASHBOARD
                 </header>
                 <div className={styles.inputSelectors}>
-                    <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
-                    <APITokenInput setApiToken={setApiToken} />
+                    {isLoggedIn ?
+                        <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/> : null
+                    }
+                    <APITokenInput setApiToken={setApiTokenAndLogIn}/>
                 </div>
-                <Route path="/" exact render={() => <Dashboard projects={selectedProjects}/>}/>
+                {isLoggedIn ?
+                    <Route path="/" exact render={() => <Dashboard projects={selectedProjects}/>}/> : null }
+                {isLoggedIn ?
                 <Route path="/edit-projects" exact
-                       render={() => <AddProjects selectedOrg={selectedOrg} selectedProjects={selectedProjects} setSelectedProjects={setFollowedSelectedProjects}/>}/>
+                       render={() => <AddProjects selectedOrg={selectedOrg} selectedProjects={selectedProjects} setSelectedProjects={setFollowedSelectedProjects}/>}/> : null
+                }
             </div>
         </Router>
     );
