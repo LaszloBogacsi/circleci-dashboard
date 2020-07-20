@@ -14,7 +14,7 @@ import styles from './widget.module.css';
 import wcStyles from './widget-container.module.css';
 
 import axios from 'axios';
-import {BrowserRouter as Router, Link, Redirect, Route} from 'react-router-dom';
+import {BrowserRouter as Router, Link, Redirect, Route, Switch} from 'react-router-dom';
 import {getFollowedProjects, getJobsForWorkflow, getOptionsData, getPipelinesForProject, getWorkflowsForPipeline} from "./MockResponse";
 
 interface ApiData {
@@ -24,7 +24,7 @@ interface ApiData {
     jobs: { workflowId: string, jobs: Job[] }[]
 }
 
-const inMockMode = true;
+const inMockMode = false;
 
 function useApiData(projects: SelectedProject[]) {
     const initialApiData: ApiData[] = [];
@@ -111,10 +111,15 @@ async function post<T>(url: string, params: { [key: string]: string } = {}, body
     return result.data as T
 }
 
+interface User {
+    name: string
+    login: string
+    id: string
+}
+
 function App() {
     const initial: Collaboration[] = [];
     const [options, setOptions] = useState(initial);
-    const [apiToken, setApiToken] = useState("");
     const previouslySelectedOrg = getSelectedOrgFromLocalStorage();
     const initialSelected = previouslySelectedOrg ? previouslySelectedOrg : options.length ? options[0] : {} as Collaboration;
     const [selectedOrg, setSelectedOrg] = useState(initialSelected);
@@ -122,10 +127,11 @@ function App() {
     const initialSelectedProject = previouslySelectedProjects ? previouslySelectedProjects : [] as SelectedProject[];
     const [selectedProjects, setSelectedProjects] = useState(initialSelectedProject);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
+    const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
 
     useEffect(() => {
         async function getOptions(): Promise<Collaboration[]> {
-            console.log(apiToken);
             if (inMockMode) {
                 return getOptionsData();
             } else {
@@ -133,27 +139,18 @@ function App() {
             }
         }
 
-      const loadOptions = async () => {
+        const loadOptions = async () => {
             let collaborations = await getOptions();
             setOptions(collaborations);
             if (!previouslySelectedOrg) {
                 setSelectedOrg(collaborations[0])
             }
         }
-        const loadAuth = async () => {
-            if (inMockMode) {
-                return setIsLoggedIn(true);
-            } else {
-                await get("http://localhost:4000/auth")
-                return setIsLoggedIn(true);
-            }
 
-        }
-        loadAuth();
-        if (isLoggedIn) {
+        if (user) {
             loadOptions();
         }
-    }, [isLoggedIn])
+    }, [user])
 
     const setFollowedSelectedProjects = (projects: SelectedProject[]) => {
         setSelectedProjects(projects);
@@ -161,11 +158,9 @@ function App() {
     }
 
     const setApiTokenAndLogIn = (token: string) => {
-        setApiToken(token);
-
         async function login() {
             await post("http://localhost:4000/login", {}, {token});
-            setIsLoggedIn(true)
+            setIsLoggedIn(true);
         }
 
         login();
@@ -177,24 +172,113 @@ function App() {
                 <header className="App-header">
                     CIRCLECI BUILD DASHBOARD
                 </header>
-                {isLoggedIn ?
+                {user ?
                     <div>
                         <div className={styles.inputSelectors}>
                             <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
                             {/*userinfo here*/}
-                            {/*<APITokenInput setApiToken={setApiTokenAndLogIn}/>*/}
+                            <Account user={user}/>
                         </div>
 
                     </div> : null}
-                <Route path="/" exact render={() => <Dashboard projects={selectedProjects}/>}/>
-                <Route path="/edit-projects" exact render={() => <AddProjects selectedOrg={selectedOrg}
-                                                                              selectedProjects={selectedProjects}
-                                                                              setSelectedProjects={setFollowedSelectedProjects}/>}/>
-                <Route path="/login" exact render={() => <div className={styles.inputSelectors}><APITokenInput setApiToken={setApiTokenAndLogIn}/></div>}/>
+                {user ?
+                    <Redirect to={"/"}/>
+                : null}
+                <Route path="/login" exact render={() => <div className={styles.inputSelectors}><APITokenInput isLoggedIn={isLoggedIn} setApiToken={setApiTokenAndLogIn}/></div>}/>
+                <Switch>
+                    <SecureRoute path="/" exact user={user} setUser={setUser} render={() => <Dashboard projects={selectedProjects} lastRefreshed={lastRefreshed}/>}/>
+                    <SecureRoute  path="/edit-projects" exact user={user} setUser={setUser} render={() => <AddProjects selectedOrg={selectedOrg}
+                                                                                                                       selectedProjects={selectedProjects}
+                                                                                                                       setSelectedProjects={setFollowedSelectedProjects}/>}/>
+                </Switch>
 
             </div>
         </Router>
     );
+}
+
+interface UserInfoProps {
+    user: User
+}
+
+export const UserInfo = (props: UserInfoProps) => {
+    const {user} = props;
+    return (
+        <div className={styles.userInfo}>
+            {user.name}
+        </div>
+    );
+};
+
+
+interface AccountProps {
+    user: User
+}
+
+export const Account = (props: AccountProps) => {
+    const {user} = props;
+
+    function handleLogout() {
+        console.log("logging out...")
+    }
+
+    return (
+        <div>
+            <UserInfo user={user}/>
+            <button onClick={handleLogout}>Logout</button>
+        </div>
+    );
+};
+
+interface SecureRouteProps {
+    render: () => ReactElement
+    user: User | null
+    setUser: (user: User) => void
+
+    [rest: string]: any
+}
+
+const SecureRoute = (props: SecureRouteProps) => {
+    const {user, setUser, render, rest} = props;
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [shouldRedirect, setShouldRedirect] = useState(false);
+    useEffect(() => {
+        const loadAuth = async () => {
+            if (inMockMode) {
+                setIsAuthenticated(true);
+                setShouldRedirect(false)
+            } else {
+                try {
+                    await get("http://localhost:4000/auth")
+                    setIsAuthenticated(true);
+                } catch (e) {
+                    setShouldRedirect(true)
+                }
+            }
+
+        }
+        loadAuth();
+
+        const loadUser = async () => {
+            if (inMockMode) {
+                setUser({id: "some Id", login: "UserLoginName", name: "User Name"});
+            } else {
+                const user = await get<User>("http://localhost:4000/user")
+                setUser(user);
+            }
+        }
+
+        if (user === null) {
+            loadUser();
+        }
+    }, []);
+
+    return (
+        <div>
+            {isAuthenticated && user && !shouldRedirect ? <Route {...rest} render={render}/> : null}
+            {shouldRedirect ? <Redirect to={"/login"}/> : null}
+        </div>
+    )
 }
 
 interface SelectedProject {
@@ -249,11 +333,14 @@ export const SelectedProjectsList = (props: SelectedProjectsListProps) => {
     return (
         <div className={styles.selectedProjectList}>
             <table>
+                <thead>
                 <tr>
                     <th>PROJECT</th>
                     <th>BRANCH</th>
                     <th>ACTION</th>
                 </tr>
+                </thead>
+                <tbody>
                 {data.map((item, index) => {
                     return (
                         <tr key={index}>
@@ -267,7 +354,7 @@ export const SelectedProjectsList = (props: SelectedProjectsListProps) => {
                         </tr>
                     )
                 })}
-
+                </tbody>
             </table>
         </div>
     );
@@ -292,6 +379,7 @@ function ProjectSelector(props: ProjectSelectorProps) {
     return (
         <div className={styles.projectSelector}>
             <table>
+                <tbody>
                 <tr>
                     <td>
                         <div>
@@ -314,17 +402,19 @@ function ProjectSelector(props: ProjectSelectorProps) {
                         </div>
                     </td>
                 </tr>
+                </tbody>
             </table>
         </div>
     )
 }
 
 interface DashboardProps {
+    lastRefreshed: Date
     projects: SelectedProject[]
 }
 
 function Dashboard(props: DashboardProps) {
-    const {projects} = props;
+    const {projects, lastRefreshed} = props;
     const apiData = useApiData(projects);
     const processAPIData: (apiData: ApiData[]) => WidgetData[] = apiData => {
         return apiData.map(data => {
@@ -355,7 +445,7 @@ function Dashboard(props: DashboardProps) {
             }
             const widgetWorkflows = getWidgetWorkflows(data);
             const latestPipeline = data.pipelines.length ? data.pipelines[0] : undefined
-            console.log(apiData);
+            // console.log(apiData);
             const getDuration = (workflows: any[]): number => {
                 if (!workflows.length) return 0;
 
@@ -420,6 +510,7 @@ function Dashboard(props: DashboardProps) {
                         <object data={edit} type="image/svg+xml" className={styles.svg}>icon</object>
                     </div>
                 </Link>
+                {lastRefreshed.toISOString()}
             </div>
             <WidgetContainer widgetData={processAPIData(apiData)}/>
         </div>
@@ -435,7 +526,6 @@ interface WidgetJob {
     startedAt: string
     stoppedAt?: string
 }
-
 
 interface WidgetWorkflow {
     name: string
@@ -460,7 +550,6 @@ interface WidgetData {
     widgetWorkflows: WidgetWorkflow[]
 }
 
-
 interface WidgetContainerProps {
     widgetData: WidgetData[]
 }
@@ -472,7 +561,6 @@ export const WidgetContainer = (props: WidgetContainerProps) => {
         </div>
     );
 };
-
 
 interface Job {
     dependencies: string[]
@@ -615,7 +703,6 @@ export const Widget = (props: WidgetProps) => {
     );
 };
 
-
 export interface Collaboration {
     vcs_type: string;
     name: string
@@ -696,11 +783,12 @@ function getFromLocalStorage<T>(key: string): T | undefined {
 }
 
 interface APITokenInputProps {
+    isLoggedIn: boolean
     setApiToken: (token: string) => void;
 }
 
 function APITokenInput(props: APITokenInputProps): ReactElement {
-    const {setApiToken} = props;
+    const {isLoggedIn, setApiToken} = props;
     const initialState = "";
     const [inputValue, setInputValue] = useState(initialState);
 
@@ -718,7 +806,7 @@ function APITokenInput(props: APITokenInputProps): ReactElement {
                     <object data={addIcon} type="image/svg+xml" className={styles.svg}>icon</object>
                 </div>
             </div>
-
+            {isLoggedIn ? <Redirect to={"/"}/>: null}
         </div>
     )
 }

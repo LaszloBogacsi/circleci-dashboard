@@ -7,7 +7,7 @@ var cors = require('cors')
 
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+var userRouter = require('./routes/user');
 var optionsRouter = require('./routes/options');
 var dataRouter = require('./routes/data');
 var projectsRouter = require('./routes/projects');
@@ -32,7 +32,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/user', userRouter);
 app.use('/options', optionsRouter);
 app.use('/data', dataRouter);
 app.use('/projects', projectsRouter);
