@@ -1,4 +1,4 @@
-import React, {ChangeEvent, ReactElement, useEffect, useState} from 'react';
+import React, {ChangeEvent, ReactElement, ReactNode, useEffect, useState} from 'react';
 import './App.css';
 import success from './img/success.svg'
 import failed from './img/failed.svg'
@@ -9,6 +9,7 @@ import edit from './img/edit.svg'
 import addIcon from './img/plus.svg'
 import removeIcon from './img/delete.svg'
 import back from './img/left.svg'
+import downChevron from './img/down-chevron.png'
 
 import styles from './widget.module.css';
 import wcStyles from './widget-container.module.css';
@@ -159,8 +160,14 @@ function App() {
 
     const setApiTokenAndLogIn = (token: string) => {
         async function login() {
-            await post("http://localhost:4000/login", {}, {token});
-            setIsLoggedIn(true);
+            if (inMockMode) {
+                setIsLoggedIn(true);
+
+            } else {
+                await post("http://localhost:4000/login", {}, {token});
+                setIsLoggedIn(true);
+            }
+
         }
 
         login();
@@ -178,7 +185,6 @@ function App() {
                         </header>
                         <div className={styles.inputSelectors}>
                             <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
-                            {/*userinfo here*/}
                             <Account user={user}/>
                         </div>
 
@@ -200,14 +206,19 @@ function App() {
 }
 
 interface UserInfoProps {
+    isOpen: boolean
     user: User
+    toggleOpen: () => void
 }
 
 export const UserInfo = (props: UserInfoProps) => {
-    const {user} = props;
+    const {user, toggleOpen, isOpen} = props;
     return (
-        <div className={styles.userInfo}>
-            {user.name}
+        <div className={styles.userInfo} onClick={toggleOpen}>
+            <div>{user.name}</div>
+            <div>
+                <img className={isOpen ? styles.flip : ""} src={downChevron} alt="down"/>
+            </div>
         </div>
     );
 };
@@ -219,18 +230,55 @@ interface AccountProps {
 
 export const Account = (props: AccountProps) => {
     const {user} = props;
+    const [toggle, setToggle] = useState(false);
 
     function handleLogout() {
         console.log("logging out...")
     }
 
+    const toggleDropDown = () => {
+        setToggle(!toggle)
+    }
+
     return (
-        <div>
-            <UserInfo user={user}/>
-            <button onClick={handleLogout}>Logout</button>
+        <div className={styles.account}>
+            <UserInfo toggleOpen={toggleDropDown} user={user} isOpen={toggle}/>
+            {toggle ?
+                <UserInfoModal logoutHandler={handleLogout}/> :
+                null
+            }
         </div>
     );
 };
+
+interface ModalProps {
+    children: ReactNode
+}
+
+interface UserInfoModalProps {
+    logoutHandler: () => void
+}
+
+const UserInfoModal =(props: UserInfoModalProps) => {
+    const {logoutHandler} = props;
+    return (
+        <Modal>
+            <div>
+                <ul>
+                    <li><button onClick={logoutHandler}>Logout</button></li>
+                </ul>
+            </div>
+        </Modal>
+    )
+}
+
+const Modal = (props: ModalProps) => {
+    return (
+        <div className={styles.modal}>
+            {props.children}
+        </div>
+    )
+}
 
 interface SecureRouteProps {
     render: () => ReactElement
