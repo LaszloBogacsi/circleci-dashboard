@@ -24,7 +24,7 @@ interface ApiData {
     jobs: { workflowId: string, jobs: Job[] }[]
 }
 
-const inMockMode = false;
+const inMockMode = true;
 
 function useApiData(projects: SelectedProject[]) {
     const initialApiData: ApiData[] = [];
@@ -169,11 +169,13 @@ function App() {
     return (
         <Router>
             <div className="App">
-                <header className="App-header">
-                    CIRCLECI BUILD DASHBOARD
-                </header>
+
                 {user ?
+
                     <div>
+                        <header className="App-header">
+                            CIRCLECI BUILD DASHBOARD
+                        </header>
                         <div className={styles.inputSelectors}>
                             <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
                             {/*userinfo here*/}
@@ -184,7 +186,7 @@ function App() {
                 {user ?
                     <Redirect to={"/"}/>
                 : null}
-                <Route path="/login" exact render={() => <div className={styles.inputSelectors}><APITokenInput isLoggedIn={isLoggedIn} setApiToken={setApiTokenAndLogIn}/></div>}/>
+                <Route path="/login" exact render={() => <APITokenInput isLoggedIn={isLoggedIn} setApiToken={setApiTokenAndLogIn}/>}/>
                 <Switch>
                     <SecureRoute path="/" exact user={user} setUser={setUser} render={() => <Dashboard projects={selectedProjects} lastRefreshed={lastRefreshed}/>}/>
                     <SecureRoute  path="/edit-projects" exact user={user} setUser={setUser} render={() => <AddProjects selectedOrg={selectedOrg}
@@ -798,15 +800,18 @@ function APITokenInput(props: APITokenInputProps): ReactElement {
     }
     const onInputChange = (event: ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value || "");
     return (
-        <div className={styles.tokenInputContainer}>
-            <label htmlFor="input">API Token</label>
-            <div className={styles.tokenInput}>
-                <input value={inputValue} onChange={onInputChange} type="text" placeholder="circleci api token"/>
-                <div onClick={onClick}>
-                    <object data={addIcon} type="image/svg+xml" className={styles.svg}>icon</object>
+        <div className={styles.login}>
+            <h1>Login with your CircleCI API token</h1>
+            <div>
+                <div className={styles.tokenInput}>
+                    <input value={inputValue} onChange={onInputChange} type="text" placeholder="circleci api token"/>
+                    <div onClick={onClick}>
+                        <object data={addIcon} type="image/svg+xml" className={styles.svg}>icon</object>
+                    </div>
                 </div>
+                {isLoggedIn ? <Redirect to={"/"}/>: null}
             </div>
-            {isLoggedIn ? <Redirect to={"/"}/>: null}
         </div>
+
     )
 }
