@@ -324,6 +324,22 @@ h1 {
     transform: rotate(180deg);
 }
 
+.userInfoModal  {
+    min-width: 12.4rem;
+}
+
+.userInfoModal button {
+    width: 100%;
+    padding: 0.4rem 1.5rem 0.4rem 1.5rem;
+    background-color: var(--input-background-color);
+    border: none;
+    color: var(--primary-text-color)
+}
+.userInfoModal button:hover {
+    background-color: var(--secondary-text-color);
+    color: var(--input-background-color)
+}
+
 .modal {
     background-color: var(--input-background-color);
     padding: 1rem;

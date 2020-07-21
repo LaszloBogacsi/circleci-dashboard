@@ -191,13 +191,13 @@ function App() {
                     </div> : null}
                 {user ?
                     <Redirect to={"/"}/>
-                : null}
+                    : null}
                 <Route path="/login" exact render={() => <APITokenInput isLoggedIn={isLoggedIn} setApiToken={setApiTokenAndLogIn}/>}/>
                 <Switch>
                     <SecureRoute path="/" exact user={user} setUser={setUser} render={() => <Dashboard projects={selectedProjects} lastRefreshed={lastRefreshed}/>}/>
-                    <SecureRoute  path="/edit-projects" exact user={user} setUser={setUser} render={() => <AddProjects selectedOrg={selectedOrg}
-                                                                                                                       selectedProjects={selectedProjects}
-                                                                                                                       setSelectedProjects={setFollowedSelectedProjects}/>}/>
+                    <SecureRoute path="/edit-projects" exact user={user} setUser={setUser} render={() => <AddProjects selectedOrg={selectedOrg}
+                                                                                                                      selectedProjects={selectedProjects}
+                                                                                                                      setSelectedProjects={setFollowedSelectedProjects}/>}/>
                 </Switch>
 
             </div>
@@ -259,14 +259,12 @@ interface UserInfoModalProps {
     logoutHandler: () => void
 }
 
-const UserInfoModal =(props: UserInfoModalProps) => {
+const UserInfoModal = (props: UserInfoModalProps) => {
     const {logoutHandler} = props;
     return (
         <Modal>
-            <div>
-                <ul>
-                    <li><button onClick={logoutHandler}>Logout</button></li>
-                </ul>
+            <div className={styles.userInfoModal}>
+                <button onClick={logoutHandler}>Logout</button>
             </div>
         </Modal>
     )
@@ -857,7 +855,7 @@ function APITokenInput(props: APITokenInputProps): ReactElement {
                         <object data={addIcon} type="image/svg+xml" className={styles.svg}>icon</object>
                     </div>
                 </div>
-                {isLoggedIn ? <Redirect to={"/"}/>: null}
+                {isLoggedIn ? <Redirect to={"/"}/> : null}
             </div>
         </div>
 
