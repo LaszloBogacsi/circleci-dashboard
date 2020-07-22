@@ -180,6 +180,13 @@ a:hover {
     width: 3rem;
     clip-path: circle(1.5rem at center);
 }
+
+.lastRefreshed {
+    display: inline-block;
+    color: var(--secondary-text-color);
+    font-size: 0.8rem;
+    text-align: right;
+}
 .userInfo {
     background-color: var(--input-background-color);
     border: none;
@@ -200,6 +207,9 @@ h1 {
 }
 
 .dashboardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     text-align: left;
 }
 

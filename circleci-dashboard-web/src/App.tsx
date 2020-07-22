@@ -1,4 +1,4 @@
-import React, {ChangeEvent, ReactElement, ReactNode, useEffect, useState} from 'react';
+import React, {ChangeEvent, ReactElement, ReactNode, useCallback, useEffect, useState} from 'react';
 import './App.css';
 import success from './img/success.svg'
 import failed from './img/failed.svg'
@@ -27,12 +27,29 @@ interface ApiData {
 
 const inMockMode = true;
 
-function useApiData(projects: SelectedProject[]) {
+function useInterval(callback: (cancelledState: () => boolean)=>void, delay: number, runImmediatley: boolean) {
+    useEffect(() => {
+        let cancelled = false;
+        function func () {
+            callback(() => cancelled);
+        }
+        const id = setInterval(func, delay);
+        if (runImmediatley) func();
+
+        return () => {
+            cancelled = true;
+            clearInterval(id);
+        }
+    }, [callback, delay, runImmediatley])
+}
+
+function useIntervalApiData (projects: SelectedProject[], interval: number, setLastRefreshed: (date: Date) => void) {
     const initialApiData: ApiData[] = [];
 
     async function getApiData(): Promise<ApiData[]> {
 
         if (inMockMode) {
+            console.log("called");
             const pipelines = await getPipelinesForProject();
             const workflows = await getWorkflowsForPipeline();
             const jobs = await getJobsForWorkflow();
@@ -48,13 +65,15 @@ function useApiData(projects: SelectedProject[]) {
     }
 
     const [apiData, setApiData] = useState(initialApiData);
-    useEffect(() => {
-        const loadApiData = async () => {
-            const apiData = await getApiData();
-            setApiData(apiData);
-        }
-        loadApiData();
+    const loadApiData = useCallback(async isCancelled => {
+        const apiData = await getApiData();
+        if (isCancelled()) return;
+        setApiData(apiData);
+        setLastRefreshed(new Date());
+
     }, [])
+
+    useInterval(loadApiData,interval, true);
 
     return apiData;
 }
@@ -194,7 +213,7 @@ function App() {
                     : null}
                 <Route path="/login" exact render={() => <APITokenInput isLoggedIn={isLoggedIn} setApiToken={setApiTokenAndLogIn}/>}/>
                 <Switch>
-                    <SecureRoute path="/" exact user={user} setUser={setUser} render={() => <Dashboard projects={selectedProjects} lastRefreshed={lastRefreshed}/>}/>
+                    <SecureRoute path="/" exact user={user} setUser={setUser} render={() => <Dashboard projects={selectedProjects} lastRefreshed={lastRefreshed} setLastRefreshed={setLastRefreshed}/>}/>
                     <SecureRoute path="/edit-projects" exact user={user} setUser={setUser} render={() => <AddProjects selectedOrg={selectedOrg}
                                                                                                                       selectedProjects={selectedProjects}
                                                                                                                       setSelectedProjects={setFollowedSelectedProjects}/>}/>
@@ -459,11 +478,14 @@ function ProjectSelector(props: ProjectSelectorProps) {
 interface DashboardProps {
     lastRefreshed: Date
     projects: SelectedProject[]
+    setLastRefreshed: (date: Date) => void
 }
 
 function Dashboard(props: DashboardProps) {
-    const {projects, lastRefreshed} = props;
-    const apiData = useApiData(projects);
+    const {projects, lastRefreshed, setLastRefreshed} = props;
+    const interval = 500000;
+    const apiData = useIntervalApiData(projects, interval, setLastRefreshed);
+
     const processAPIData: (apiData: ApiData[]) => WidgetData[] = apiData => {
         return apiData.map(data => {
             const getWidgetWorkflows: (data: ApiData) => WidgetWorkflow[] = (data: ApiData) => {
@@ -515,23 +537,7 @@ function Dashboard(props: DashboardProps) {
                 return (Date.parse(now) - Date.parse(latestStoppedTime));
             }
 
-            const getFormattedSince = (sinceInMillies: number): string => {
-                const since = new Date(sinceInMillies);
-                const months = since.getMonth();
-                if (months > 0) return months > 1 ? `${months} months ago` : `${months} month ago`
 
-                const days = since.getDate() - 1;
-                if (days > 0) return days > 1 ? `${days} days ago` : `${days} day ago`
-
-                const hours = since.getHours();
-                if (hours > 0) return hours > 1 ? `${hours} hours ago` : `${hours} hour ago`
-
-                const minutes = since.getMinutes();
-                if (minutes > 0) return minutes > 1 ? `${minutes} minutes ago` : `${minutes} minute ago`
-
-                const seconds = since.getSeconds();
-                return seconds > 0 ? seconds > 1 ? `${seconds} seconds ago` : `${seconds} second ago` : "";
-            }
 
             return {
                 projectName: data.project.toLocaleUpperCase(),
@@ -548,17 +554,44 @@ function Dashboard(props: DashboardProps) {
             } as WidgetData;
         })
     }
+    const getFormattedSince = (sinceInMillies: number): string => {
+        const since = new Date(sinceInMillies);
+        const months = since.getUTCMonth();
+        if (months > 0) return months > 1 ? `${months} months ago` : `${months} month ago`
+
+        const days = since.getUTCDate() - 1;
+        if (days > 0) return days > 1 ? `${days} days ago` : `${days} day ago`
+
+        const hours = since.getUTCHours();
+        if (hours > 0) return hours > 1 ? `${hours} hours ago` : `${hours} hour ago`
+
+        const minutes = since.getUTCMinutes();
+        if (minutes > 0) return minutes > 1 ? `${minutes} minutes ago` : `${minutes} minute ago`
+
+        const seconds = since.getUTCSeconds();
+        return seconds > 0 ? seconds > 1 ? `${seconds} seconds ago` : `${seconds} second ago` : "";
+    }
+    const [lastUpdated, setLastUpdated] = useState<string>("");
+    useEffect(() =>{
+        const id = setInterval(() => setLastUpdated(getFormattedSince(new Date().getTime()-lastRefreshed.getTime())), 1000)
+        return () => clearInterval(id);
+    })
 
     return (
         <div>
             <div className={styles.dashboardHeader}>
-                <h1>PROJECTS</h1>
-                <Link to="/edit-projects">
-                    <div title="Manage Projects">
-                        <object data={edit} type="image/svg+xml" className={styles.svg}>icon</object>
-                    </div>
-                </Link>
-                {lastRefreshed.toISOString()}
+                <div>
+                    <h1>PROJECTS</h1>
+                    <Link to="/edit-projects">
+                        <div title="Manage Projects">
+                            <object data={edit} type="image/svg+xml" className={styles.svg}>icon</object>
+                        </div>
+                    </Link>
+                </div>
+                <div className={styles.lastRefreshed}>
+                    <div>Last Updated:</div>
+                    <div>{lastUpdated}</div>
+                </div>
             </div>
             <WidgetContainer widgetData={processAPIData(apiData)}/>
         </div>
