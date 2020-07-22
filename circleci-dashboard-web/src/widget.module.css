@@ -181,12 +181,6 @@ a:hover {
     clip-path: circle(1.5rem at center);
 }
 
-.lastRefreshed {
-    display: inline-block;
-    color: var(--secondary-text-color);
-    font-size: 0.8rem;
-    text-align: right;
-}
 .userInfo {
     background-color: var(--input-background-color);
     border: none;
@@ -211,6 +205,7 @@ h1 {
     align-items: center;
     justify-content: space-between;
     text-align: left;
+    margin: 2rem 0 2rem 0;
 }
 
 .dashboardHeader a {
@@ -220,6 +215,18 @@ h1 {
 .dashboardHeader object {
     width: 1.3rem;
     height: 1.3rem;
+}
+
+.lastRefreshed {
+    display: inline-block;
+    color: var(--secondary-text-color);
+    font-size: 0.8rem;
+    text-align: right;
+}
+.lastRefreshed object {
+    width: 1rem;
+    height: 1rem;
+    margin-bottom: 4px;
 }
 
 .selectedProjectList object {

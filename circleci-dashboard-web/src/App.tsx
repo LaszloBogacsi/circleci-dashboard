@@ -10,6 +10,7 @@ import addIcon from './img/plus.svg'
 import removeIcon from './img/delete.svg'
 import back from './img/left.svg'
 import downChevron from './img/down-chevron.png'
+import settings from './img/settings.svg'
 
 import styles from './widget.module.css';
 import wcStyles from './widget-container.module.css';
@@ -27,12 +28,14 @@ interface ApiData {
 
 const inMockMode = true;
 
-function useInterval(callback: (cancelledState: () => boolean)=>void, delay: number, runImmediatley: boolean) {
+function useInterval(callback: (cancelledState: () => boolean) => void, delay: number, runImmediatley: boolean) {
     useEffect(() => {
         let cancelled = false;
-        function func () {
+
+        function func() {
             callback(() => cancelled);
         }
+
         const id = setInterval(func, delay);
         if (runImmediatley) func();
 
@@ -43,7 +46,7 @@ function useInterval(callback: (cancelledState: () => boolean)=>void, delay: num
     }, [callback, delay, runImmediatley])
 }
 
-function useIntervalApiData (projects: SelectedProject[], interval: number, setLastRefreshed: (date: Date) => void) {
+function useIntervalApiData(projects: SelectedProject[], interval: number, setLastRefreshed: (date: Date) => void) {
     const initialApiData: ApiData[] = [];
 
     async function getApiData(): Promise<ApiData[]> {
@@ -73,7 +76,7 @@ function useIntervalApiData (projects: SelectedProject[], interval: number, setL
 
     }, [])
 
-    useInterval(loadApiData,interval, true);
+    useInterval(loadApiData, interval, true);
 
     return apiData;
 }
@@ -149,6 +152,8 @@ function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState<User | null>(null);
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+    const initialRefreshIntervalInMs = 60 * 1000; // 1 minute
+    const [refreshInterval, setRefreshInterval] = useState<number>(initialRefreshIntervalInMs)
 
     useEffect(() => {
         async function getOptions(): Promise<Collaboration[]> {
@@ -213,7 +218,12 @@ function App() {
                     : null}
                 <Route path="/login" exact render={() => <APITokenInput isLoggedIn={isLoggedIn} setApiToken={setApiTokenAndLogIn}/>}/>
                 <Switch>
-                    <SecureRoute path="/" exact user={user} setUser={setUser} render={() => <Dashboard projects={selectedProjects} lastRefreshed={lastRefreshed} setLastRefreshed={setLastRefreshed}/>}/>
+                    <SecureRoute path="/" exact user={user} setUser={setUser} render={() => <Dashboard projects={selectedProjects}
+                                                                                                       lastRefreshed={lastRefreshed}
+                                                                                                       setLastRefreshed={setLastRefreshed}
+                                                                                                       refreshInterval={refreshInterval}
+                                                                                                       setRefreshInterval={setRefreshInterval}
+                    />}/>
                     <SecureRoute path="/edit-projects" exact user={user} setUser={setUser} render={() => <AddProjects selectedOrg={selectedOrg}
                                                                                                                       selectedProjects={selectedProjects}
                                                                                                                       setSelectedProjects={setFollowedSelectedProjects}/>}/>
@@ -479,11 +489,14 @@ interface DashboardProps {
     lastRefreshed: Date
     projects: SelectedProject[]
     setLastRefreshed: (date: Date) => void
+    refreshInterval: number
+    setRefreshInterval: (newInterval: number) => void
 }
 
 function Dashboard(props: DashboardProps) {
-    const {projects, lastRefreshed, setLastRefreshed} = props;
+    const {projects, lastRefreshed, setLastRefreshed, refreshInterval, setRefreshInterval} = props;
     const interval = 500000;
+
     const apiData = useIntervalApiData(projects, interval, setLastRefreshed);
 
     const processAPIData: (apiData: ApiData[]) => WidgetData[] = apiData => {
@@ -537,8 +550,6 @@ function Dashboard(props: DashboardProps) {
                 return (Date.parse(now) - Date.parse(latestStoppedTime));
             }
 
-
-
             return {
                 projectName: data.project.toLocaleUpperCase(),
                 pipelineNumber: latestPipeline ? `#${latestPipeline?.number}` : "",
@@ -572,8 +583,8 @@ function Dashboard(props: DashboardProps) {
         return seconds > 0 ? seconds > 1 ? `${seconds} seconds ago` : `${seconds} second ago` : "";
     }
     const [lastUpdated, setLastUpdated] = useState<string>("");
-    useEffect(() =>{
-        const id = setInterval(() => setLastUpdated(getFormattedSince(new Date().getTime()-lastRefreshed.getTime())), 1000)
+    useEffect(() => {
+        const id = setInterval(() => setLastUpdated(getFormattedSince(new Date().getTime() - lastRefreshed.getTime())), 1000)
         return () => clearInterval(id);
     })
 
@@ -588,14 +599,30 @@ function Dashboard(props: DashboardProps) {
                         </div>
                     </Link>
                 </div>
-                <div className={styles.lastRefreshed}>
-                    <div>Last Updated:</div>
-                    <div>{lastUpdated}</div>
-                </div>
+                <LastUpdated lastUpdated={lastUpdated}/>
             </div>
             <WidgetContainer widgetData={processAPIData(apiData)}/>
         </div>
     );
+}
+
+interface LastUpdatedProps {
+    lastUpdated: string
+}
+
+const LastUpdated = (props: LastUpdatedProps) => {
+    const {lastUpdated} = props;
+    return (
+        <div className={styles.lastRefreshed}>
+            <div>
+                <div title="Change Interval" onClick={() => console.log("open settings modal")}>
+                    <object data={settings} type="image/svg+xml" className={styles.svg}>icon</object>
+                </div>
+                Last Updated:
+            </div>
+            <div>{lastUpdated}</div>
+        </div>
+    )
 }
 
 
