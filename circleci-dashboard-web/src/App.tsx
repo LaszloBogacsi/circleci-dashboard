@@ -152,7 +152,8 @@ function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState<User | null>(null);
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
-    const initialRefreshIntervalInMs = 60 * 1000; // 1 minute
+    const previouslySetRefreshInterval = getRefreshIntervalFromLocalStorage()
+    const initialRefreshIntervalInMs = previouslySetRefreshInterval ? previouslySetRefreshInterval : 60 * 1000; // 1 minute
     const [refreshInterval, setRefreshInterval] = useState<number>(initialRefreshIntervalInMs)
 
     useEffect(() => {
@@ -197,6 +198,11 @@ function App() {
         login();
     }
 
+    const setAndStoreRefreshInterval = (interval: number): void => {
+        setRefreshInterval(interval);
+        saveRefreshIntervalToLocalStorage(interval);
+    }
+
     return (
         <Router>
             <div className="App">
@@ -222,7 +228,7 @@ function App() {
                                                                                                        lastRefreshed={lastRefreshed}
                                                                                                        setLastRefreshed={setLastRefreshed}
                                                                                                        refreshInterval={refreshInterval}
-                                                                                                       setRefreshInterval={setRefreshInterval}
+                                                                                                       setRefreshInterval={setAndStoreRefreshInterval}
                     />}/>
                     <SecureRoute path="/edit-projects" exact user={user} setUser={setUser} render={() => <AddProjects selectedOrg={selectedOrg}
                                                                                                                       selectedProjects={selectedProjects}
@@ -912,6 +918,13 @@ function getSelectedProjectsFromLocalStorage(): SelectedProject[] | undefined {
 
 function saveSelectedProjectsToLocalStorage(selectedProjects: SelectedProject[]): void {
     saveToLocalStorage("circleci-dashboard-projects-storage", JSON.stringify(selectedProjects));
+}
+function getRefreshIntervalFromLocalStorage(): number | undefined {
+    return getFromLocalStorage<number>("circleci-dashboard-interval-storage");
+}
+
+function saveRefreshIntervalToLocalStorage(interval: number): void {
+    saveToLocalStorage("circleci-dashboard-interval-storage", `${interval}`);
 }
 
 function saveToLocalStorage(key: string, value: string) {
