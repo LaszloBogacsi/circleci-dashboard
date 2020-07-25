@@ -218,10 +218,15 @@ h1 {
 }
 
 .lastRefreshed {
+    position: relative;
     display: inline-block;
     color: var(--secondary-text-color);
     font-size: 0.8rem;
     text-align: right;
+}
+.lastRefreshed div div {
+    cursor: pointer;
+
 }
 .lastRefreshed object {
     width: 1rem;
@@ -362,5 +367,46 @@ h1 {
     padding: 1rem;
     position: absolute;
     top: 3.5rem;
+    right: 0;
     border-radius: 4px;
+    z-index: 99;
+}
+
+.intervalModal {
+    text-align: left;
+}
+.intervalModal input {
+    margin-bottom: 1rem;
+    line-height: 1.5rem;
+    border-radius: 4px;
+    background-color: #272727;
+    color: var(--secondary-text-color);;
+    border: 1px solid var(--secondary-text-color);
+    padding-left: 1rem;
+
+}
+
+.intervalModal .buttonGroup {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.buttonGroup {
+    margin-bottom: 0.5rem;
+}
+
+.negative {
+    border: 1px solid var(--secondary-text-color);
+    border-radius: 4px;
+    background-color: var(--input-background-color);
+    color: var(--secondary-text-color);
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+}
+.positive {
+    border: 1px solid var(--input-background-color);
+    border-radius: 4px;
+    background-color: var(--secondary-text-color);
+    color: var(--input-background-color);
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
 }

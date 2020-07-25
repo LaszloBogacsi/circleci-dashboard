@@ -272,10 +272,7 @@ export const Account = (props: AccountProps) => {
     return (
         <div className={styles.account}>
             <UserInfo toggleOpen={toggleDropDown} user={user} isOpen={toggle}/>
-            {toggle ?
-                <UserInfoModal logoutHandler={handleLogout}/> :
-                null
-            }
+            {toggle ? <UserInfoModal logoutHandler={handleLogout}/> : null}
         </div>
     );
 };
@@ -495,9 +492,8 @@ interface DashboardProps {
 
 function Dashboard(props: DashboardProps) {
     const {projects, lastRefreshed, setLastRefreshed, refreshInterval, setRefreshInterval} = props;
-    const interval = 500000;
 
-    const apiData = useIntervalApiData(projects, interval, setLastRefreshed);
+    const apiData = useIntervalApiData(projects, refreshInterval, setLastRefreshed);
 
     const processAPIData: (apiData: ApiData[]) => WidgetData[] = apiData => {
         return apiData.map(data => {
@@ -599,7 +595,7 @@ function Dashboard(props: DashboardProps) {
                         </div>
                     </Link>
                 </div>
-                <LastUpdated lastUpdated={lastUpdated}/>
+                <LastUpdated lastUpdated={lastUpdated} refreshInterval={refreshInterval} setRefreshInterval={setRefreshInterval}/>
             </div>
             <WidgetContainer widgetData={processAPIData(apiData)}/>
         </div>
@@ -608,23 +604,60 @@ function Dashboard(props: DashboardProps) {
 
 interface LastUpdatedProps {
     lastUpdated: string
+    refreshInterval: number
+    setRefreshInterval: (newInterval: number) => void
 }
 
 const LastUpdated = (props: LastUpdatedProps) => {
-    const {lastUpdated} = props;
+    const {lastUpdated, refreshInterval, setRefreshInterval} = props;
+    const [toggle, setToggle] = useState(false);
+    const toggleDropDown = () => {
+        setToggle(!toggle)
+    }
+    const close = () => setToggle(false);
     return (
         <div className={styles.lastRefreshed}>
             <div>
-                <div title="Change Interval" onClick={() => console.log("open settings modal")}>
+                <div title="Change Interval" onClick={toggleDropDown}>
                     <object data={settings} type="image/svg+xml" className={styles.svg}>icon</object>
                 </div>
                 Last Updated:
             </div>
             <div>{lastUpdated}</div>
+            {toggle ? <IntervalModal refreshInterval={refreshInterval} setRefreshInterval={setRefreshInterval} close={close}/> : null}
         </div>
     )
 }
 
+interface IntervalModalProps {
+    refreshInterval: number
+    setRefreshInterval: (newInterval: number) => void
+    close: () => void
+}
+
+export const IntervalModal = (props: IntervalModalProps) => {
+    const {refreshInterval, setRefreshInterval, close} = props;
+    const [inputValue, setInputValue] = useState<number>(refreshInterval);
+    const onInputChange = (event: ChangeEvent<HTMLInputElement>) => setInputValue(Number(event.target.value) * 1000 || 0);
+    const onOk = () => {
+        setRefreshInterval(inputValue);
+        close();
+    }
+    const onCancel = () => close();
+    return (
+        <Modal>
+            <div className={styles.intervalModal}>
+                <h3>Set Refresh Interval</h3>
+                <label htmlFor="input">Interval, seconds</label>
+                <input value={inputValue / 1000} onChange={onInputChange} type="number"/>
+                <div className={styles.buttonGroup}>
+                    <button className={styles.negative} onClick={onCancel}>Cancel</button>
+                    <button className={styles.positive} onClick={onOk}>OK</button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
 
 interface WidgetJob {
     name: string
