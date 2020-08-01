@@ -26,7 +26,7 @@ interface ApiData {
     jobs: { workflowId: string, jobs: Job[] }[]
 }
 
-const inMockMode = true;
+const inMockMode = false;
 
 function useInterval(callback: (cancelledState: () => boolean) => void, delay: number, runImmediatley: boolean) {
     useEffect(() => {
@@ -203,6 +203,17 @@ function App() {
         saveRefreshIntervalToLocalStorage(interval);
     }
 
+    const logout = async () => {
+        try {
+            await post("http://localhost:4000/logout", {}, {});
+            setUser(null);
+            setIsLoggedIn(false);
+
+        } catch {
+
+        }
+    }
+
     return (
         <Router>
             <div className="App">
@@ -215,21 +226,20 @@ function App() {
                         </header>
                         <div className={styles.inputSelectors}>
                             <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
-                            <Account user={user}/>
+                            <Account user={user} logOutHandler={logout}/>
                         </div>
 
                     </div> : null}
                 {user ?
                     <Redirect to={"/"}/>
-                    : null}
+                    : <Redirect to={"/login"}/>}
                 <Route path="/login" exact render={() => <APITokenInput isLoggedIn={isLoggedIn} setApiToken={setApiTokenAndLogIn}/>}/>
                 <Switch>
                     <SecureRoute path="/" exact user={user} setUser={setUser} render={() => <Dashboard projects={selectedProjects}
                                                                                                        lastRefreshed={lastRefreshed}
                                                                                                        setLastRefreshed={setLastRefreshed}
                                                                                                        refreshInterval={refreshInterval}
-                                                                                                       setRefreshInterval={setAndStoreRefreshInterval}
-                    />}/>
+                                                                                                       setRefreshInterval={setAndStoreRefreshInterval}/>}/>
                     <SecureRoute path="/edit-projects" exact user={user} setUser={setUser} render={() => <AddProjects selectedOrg={selectedOrg}
                                                                                                                       selectedProjects={selectedProjects}
                                                                                                                       setSelectedProjects={setFollowedSelectedProjects}/>}/>
@@ -261,24 +271,25 @@ export const UserInfo = (props: UserInfoProps) => {
 
 interface AccountProps {
     user: User
+    logOutHandler: () => void
 }
 
 export const Account = (props: AccountProps) => {
-    const {user} = props;
+    const {user, logOutHandler} = props;
     const [toggle, setToggle] = useState(false);
-
-    function handleLogout() {
-        console.log("logging out...")
-    }
 
     const toggleDropDown = () => {
         setToggle(!toggle)
+    }
+    const logoutAndCloseModal = () => {
+        setToggle(false);
+        logOutHandler();
     }
 
     return (
         <div className={styles.account}>
             <UserInfo toggleOpen={toggleDropDown} user={user} isOpen={toggle}/>
-            {toggle ? <UserInfoModal logoutHandler={handleLogout}/> : null}
+            {toggle ? <UserInfoModal logoutHandler={logoutAndCloseModal}/> : null}
         </div>
     );
 };
@@ -919,6 +930,7 @@ function getSelectedProjectsFromLocalStorage(): SelectedProject[] | undefined {
 function saveSelectedProjectsToLocalStorage(selectedProjects: SelectedProject[]): void {
     saveToLocalStorage("circleci-dashboard-projects-storage", JSON.stringify(selectedProjects));
 }
+
 function getRefreshIntervalFromLocalStorage(): number | undefined {
     return getFromLocalStorage<number>("circleci-dashboard-interval-storage");
 }

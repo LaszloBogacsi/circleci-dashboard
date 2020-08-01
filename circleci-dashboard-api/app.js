@@ -13,6 +13,7 @@ var dataRouter = require('./routes/data');
 var projectsRouter = require('./routes/projects');
 var tokenRouter = require('./routes/registerToken');
 var authRouter = require('./routes/auth');
+var logoutRouter = require('./routes/logout');
 var app = express();
 var corsOptions = {
   origin: 'http://localhost:3000',
@@ -38,6 +39,7 @@ app.use('/data', dataRouter);
 app.use('/projects', projectsRouter);
 app.use('/login', tokenRouter);
 app.use('/auth', authRouter);
+app.use('/logout', logoutRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

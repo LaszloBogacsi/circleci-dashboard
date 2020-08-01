@@ -4,7 +4,7 @@ const axios = require('axios');
 
 /* set token cookie */
 router.get('/', async function (req, res, next) {
-    const token = req.cookies.token;
+    const token = req.cookies["circleci-api-token"];
     if (!token) {
         res.status(403).send({message: "Api Token not found"})
 

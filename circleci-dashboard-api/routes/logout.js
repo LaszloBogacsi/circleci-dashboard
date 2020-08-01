@@ -3,9 +3,7 @@ var router = express.Router();
 
 /* set token cookie */
 router.post('/', async function (req, res, next) {
-    const body = req.body;
-// maxage in ms
-    res.cookie("circleci-api-token", body.token, {httpOnly: true, maxAge: 900000, sameSite: ""}).status(200);
+    res.clearCookie("circleci-api-token")
     res.send();
 });
 

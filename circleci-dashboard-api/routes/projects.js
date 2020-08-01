@@ -5,7 +5,7 @@ const axios = require('axios');
 /* GET list of followed projects. */
 router.get('/', async function(req, res, next) {
   const url = "https://circleci.com/api/v1.1/projects";
-  let token = req.cookies.token;
+  const token = req.cookies["circleci-api-token"];
   if (!token) {
     res.status(403).send({message: "Api Token not found"})
   } else {
