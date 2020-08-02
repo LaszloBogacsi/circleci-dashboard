@@ -9,7 +9,6 @@ import edit from './img/edit.svg'
 import addIcon from './img/plus.svg'
 import removeIcon from './img/delete.svg'
 import back from './img/left.svg'
-import downChevron from './img/down-chevron.png'
 import settings from './img/settings.svg'
 
 import styles from './widget.module.css';
@@ -18,6 +17,13 @@ import wcStyles from './widget-container.module.css';
 import axios from 'axios';
 import {BrowserRouter as Router, Link, Redirect, Route, Switch} from 'react-router-dom';
 import {getFollowedProjects, getJobsForWorkflow, getOptionsData, getPipelinesForProject, getWorkflowsForPipeline} from "./MockResponse";
+import Header from "components/Header/Header";
+import {saveToLocalStorage} from "utils/localStorage";
+import Select from "components/shared/Select";
+import Modal from "components/shared/Modal";
+import {User} from "domain/User";
+import {Collaboration} from "domain/Collaboration";
+import Login from "components/Login/Login";
 
 interface ApiData {
     project: string
@@ -134,12 +140,6 @@ async function post<T>(url: string, params: { [key: string]: string } = {}, body
     return result.data as T
 }
 
-interface User {
-    name: string
-    login: string
-    id: string
-}
-
 function App() {
     const initial: Collaboration[] = [];
     const [options, setOptions] = useState(initial);
@@ -217,108 +217,23 @@ function App() {
     return (
         <Router>
             <div className="App">
-
-                {user ?
-
-                    <div>
-                        <header className="App-header">
-                            CIRCLECI BUILD DASHBOARD
-                        </header>
-                        <div className={styles.inputSelectors}>
-                            <OrgSelector options={options} setSelectedOrg={setSelectedOrg} selectedOrg={selectedOrg}/>
-                            <Account user={user} logOutHandler={logout}/>
-                        </div>
-
-                    </div> : null}
-                {user ?
-                    <Redirect to={"/"}/>
-                    : <Redirect to={"/login"}/>}
-                <Route path="/login" exact render={() => <APITokenInput isLoggedIn={isLoggedIn} setApiToken={setApiTokenAndLogIn}/>}/>
+                {user ? <Header user={user} options={options} selectedOrg={selectedOrg} setSelectedOrg={setSelectedOrg} logout={logout}/> : null}
+                {user ? <Redirect to={"/"}/> : <Redirect to={"/login"}/>}
+                <Route path="/login" exact render={() => <Login isLoggedIn={isLoggedIn} setApiToken={setApiTokenAndLogIn}/>}/>
                 <Switch>
                     <SecureRoute path="/" exact user={user} setUser={setUser} render={() => <Dashboard projects={selectedProjects}
                                                                                                        lastRefreshed={lastRefreshed}
                                                                                                        setLastRefreshed={setLastRefreshed}
                                                                                                        refreshInterval={refreshInterval}
                                                                                                        setRefreshInterval={setAndStoreRefreshInterval}/>}/>
-                    <SecureRoute path="/edit-projects" exact user={user} setUser={setUser} render={() => <AddProjects selectedOrg={selectedOrg}
-                                                                                                                      selectedProjects={selectedProjects}
-                                                                                                                      setSelectedProjects={setFollowedSelectedProjects}/>}/>
+                    <SecureRoute path="/edit-projects" exact user={user} setUser={setUser} render={() => <ManageProjects selectedOrg={selectedOrg}
+                                                                                                                         selectedProjects={selectedProjects}
+                                                                                                                         setSelectedProjects={setFollowedSelectedProjects}/>}/>
                 </Switch>
 
             </div>
         </Router>
     );
-}
-
-interface UserInfoProps {
-    isOpen: boolean
-    user: User
-    toggleOpen: () => void
-}
-
-export const UserInfo = (props: UserInfoProps) => {
-    const {user, toggleOpen, isOpen} = props;
-    return (
-        <div className={styles.userInfo} onClick={toggleOpen}>
-            <div>{user.name}</div>
-            <div>
-                <img className={isOpen ? styles.flip : ""} src={downChevron} alt="down"/>
-            </div>
-        </div>
-    );
-};
-
-
-interface AccountProps {
-    user: User
-    logOutHandler: () => void
-}
-
-export const Account = (props: AccountProps) => {
-    const {user, logOutHandler} = props;
-    const [toggle, setToggle] = useState(false);
-
-    const toggleDropDown = () => {
-        setToggle(!toggle)
-    }
-    const logoutAndCloseModal = () => {
-        setToggle(false);
-        logOutHandler();
-    }
-
-    return (
-        <div className={styles.account}>
-            <UserInfo toggleOpen={toggleDropDown} user={user} isOpen={toggle}/>
-            {toggle ? <UserInfoModal logoutHandler={logoutAndCloseModal}/> : null}
-        </div>
-    );
-};
-
-interface ModalProps {
-    children: ReactNode
-}
-
-interface UserInfoModalProps {
-    logoutHandler: () => void
-}
-
-const UserInfoModal = (props: UserInfoModalProps) => {
-    const {logoutHandler} = props;
-    return (
-        <Modal>
-            <div className={styles.userInfoModal}>
-                <button onClick={logoutHandler}>Logout</button>
-            </div>
-        </Modal>
-    )
-}
-
-const Modal = (props: ModalProps) => {
-    return (
-        <div className={styles.modal}>
-            {props.children}
-        </div>
-    )
 }
 
 interface SecureRouteProps {
@@ -383,7 +298,7 @@ interface AddProjectProps {
     setSelectedProjects: (projects: SelectedProject[]) => void
 }
 
-export const AddProjects = (props: AddProjectProps) => {
+export const ManageProjects = (props: AddProjectProps) => {
     const {selectedOrg, selectedProjects, setSelectedProjects} = props;
 
     const projects = useFollowedProjects();
@@ -405,7 +320,7 @@ export const AddProjects = (props: AddProjectProps) => {
             <div className={styles.addProjectsHeader}>
                 <h1>Manage Projects</h1>
                 <Link to="/" title={"Back"}>
-                    <object data={back} type="image/svg+xml" className={styles.svg}>icon</object>
+                    <object data={back} type="image/svg+xml" className="svg">icon</object>
                 </Link>
             </div>
             <SelectedProjectsList data={selectedProjects} remove={removeASelectedProject}/>
@@ -439,7 +354,7 @@ export const SelectedProjectsList = (props: SelectedProjectsListProps) => {
                             <td>{item.branch}</td>
                             <td>
                                 <div className={styles.cellAction} onClick={() => remove(item)}>
-                                    <object data={removeIcon} type="image/svg+xml" className={styles.svg}>icon</object>
+                                    <object data={removeIcon} type="image/svg+xml" className="svg">icon</object>
                                 </div>
                             </td>
                         </tr>
@@ -489,7 +404,7 @@ function ProjectSelector(props: ProjectSelectorProps) {
                     </td>
                     <td>
                         <div className={styles.cellAction} onClick={() => add({name: selectedProject, branch: selectedBranch})}>
-                            <object data={addIcon} type="image/svg+xml" className={styles.svg}>icon</object>
+                            <object data={addIcon} type="image/svg+xml" className="svg">icon</object>
                         </div>
                     </td>
                 </tr>
@@ -578,6 +493,7 @@ function Dashboard(props: DashboardProps) {
             } as WidgetData;
         })
     }
+
     const getFormattedSince = (sinceInMillies: number): string => {
         const since = new Date(sinceInMillies);
         const months = since.getUTCMonth();
@@ -608,7 +524,7 @@ function Dashboard(props: DashboardProps) {
                     <h1>PROJECTS</h1>
                     <Link to="/edit-projects">
                         <div title="Manage Projects">
-                            <object data={edit} type="image/svg+xml" className={styles.svg}>icon</object>
+                            <object data={edit} type="image/svg+xml" className="svg">icon</object>
                         </div>
                     </Link>
                 </div>
@@ -636,7 +552,7 @@ const LastUpdated = (props: LastUpdatedProps) => {
         <div className={styles.lastRefreshed}>
             <div>
                 <div title="Change Interval" onClick={toggleDropDown}>
-                    <object data={settings} type="image/svg+xml" className={styles.svg}>icon</object>
+                    <object data={settings} type="image/svg+xml" className="svg">icon</object>
                 </div>
                 Last Updated:
             </div>
@@ -803,7 +719,6 @@ export function getProjectStatus(workflows: { name: string, status: string }[]):
     }
 }
 
-
 export const Widget = (props: WidgetProps) => {
     const {data} = props;
     const statusIcons = {
@@ -828,6 +743,7 @@ export const Widget = (props: WidgetProps) => {
 
         }
     }
+
     return (
         <div className={`${styles.widget} ${styles[projectStatus]}`}>
             <h2><a href={data.repoUrl}>{data.projectName}</a></h2>
@@ -845,7 +761,7 @@ export const Widget = (props: WidgetProps) => {
                             return (
                                 <a key={index} href={job.url} title={job.name}>
                                     <div>
-                                        <object data={jobStatus(job.status)} type="image/svg+xml" className={styles.svg}>icon</object>
+                                        <object data={jobStatus(job.status)} type="image/svg+xml" className="svg">icon</object>
                                     </div>
                                 </a>
                             )
@@ -861,63 +777,7 @@ export const Widget = (props: WidgetProps) => {
     );
 };
 
-export interface Collaboration {
-    vcs_type: string;
-    name: string
-    avatar_url: string
-}
-
 export default App;
-
-interface OrgSelectorProps {
-    options: Collaboration[]
-    setSelectedOrg: (collaboration: Collaboration) => void
-    selectedOrg: Collaboration
-}
-
-function OrgSelector(props: OrgSelectorProps): ReactElement {
-    const {options, setSelectedOrg, selectedOrg} = props;
-
-    const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
-        let collaboration = options.find(option => option.name === event.target.value)!;
-        setSelectedOrg(collaboration);
-        saveSelectedOrgToLocalStorage(collaboration);
-    }
-    return (
-        <div>
-            <label htmlFor="select">ORG</label>
-            <div className={styles.orgSelector}>
-                <Select
-                    value={selectedOrg.name}
-                    onChange={handleChange}>
-                    {options.map((option, index) => <option key={index} value={option.name}>{option.name}</option>)}
-                </Select>
-                <img src={selectedOrg.avatar_url} alt="org-avatar"/>
-            </div>
-
-        </div>
-
-    )
-}
-
-interface SelectProps {
-    value: string
-    onChange: (event: ChangeEvent<HTMLSelectElement>) => void
-    children: ReactElement[]
-}
-
-function Select(props: SelectProps) {
-    const {value, onChange} = props;
-    return (
-        <select value={value} onChange={onChange}>
-            {props.children}
-        </select>
-    )
-}
-
-function saveSelectedOrgToLocalStorage(selectedOrg: Collaboration): void {
-    saveToLocalStorage("circleci-dashboard-collab-storage", JSON.stringify(selectedOrg));
-}
 
 function getSelectedOrgFromLocalStorage(): Collaboration | undefined {
     return getFromLocalStorage<Collaboration>("circleci-dashboard-collab-storage");
@@ -939,43 +799,7 @@ function saveRefreshIntervalToLocalStorage(interval: number): void {
     saveToLocalStorage("circleci-dashboard-interval-storage", `${interval}`);
 }
 
-function saveToLocalStorage(key: string, value: string) {
-    window.localStorage.setItem(key, value);
-}
-
 function getFromLocalStorage<T>(key: string): T | undefined {
     const item = localStorage.getItem(key)
     return item !== null ? JSON.parse(item) as any as T : undefined;
-}
-
-interface APITokenInputProps {
-    isLoggedIn: boolean
-    setApiToken: (token: string) => void;
-}
-
-function APITokenInput(props: APITokenInputProps): ReactElement {
-    const {isLoggedIn, setApiToken} = props;
-    const initialState = "";
-    const [inputValue, setInputValue] = useState(initialState);
-
-    const onClick: () => void = () => {
-        setApiToken(inputValue);
-        setInputValue(initialState);
-    }
-    const onInputChange = (event: ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value || "");
-    return (
-        <div className={styles.login}>
-            <h1>Login with your CircleCI API token</h1>
-            <div>
-                <div className={styles.tokenInput}>
-                    <input value={inputValue} onChange={onInputChange} type="text" placeholder="circleci api token"/>
-                    <div onClick={onClick}>
-                        <object data={addIcon} type="image/svg+xml" className={styles.svg}>icon</object>
-                    </div>
-                </div>
-                {isLoggedIn ? <Redirect to={"/"}/> : null}
-            </div>
-        </div>
-
-    )
 }

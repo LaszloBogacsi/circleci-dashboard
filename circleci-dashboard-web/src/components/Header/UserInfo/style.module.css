@@ -1,0 +1,17 @@
+.userInfo {
+    background-color: var(--input-background-color);
+    border: none;
+    border-radius: 4px;
+    color: var(--secondary-text-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 3rem;
+    padding: 0 2rem 0 2rem;
+    font-size: 0.9rem;
+}
+
+.flip {
+    transform: rotate(180deg);
+}

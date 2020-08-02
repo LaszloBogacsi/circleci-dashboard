@@ -1,0 +1,11 @@
+.orgSelector {
+    display: flex;
+    align-items: center;
+}
+
+.orgSelector img {
+    margin-left: 1rem;
+    height: 3rem;
+    width: 3rem;
+    clip-path: circle(1.5rem at center);
+}

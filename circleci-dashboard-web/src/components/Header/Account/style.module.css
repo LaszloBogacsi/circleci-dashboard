@@ -1,0 +1,10 @@
+.account {
+    position: relative;
+    min-width: 15rem;
+}
+.account img {
+    margin-left: 1rem;
+    width: 12px;
+    height: 12px;
+    filter: invert();
+}

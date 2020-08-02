@@ -1,4 +1,5 @@
-import {Collaboration, FollowedProjectsData} from "./App";
+import {FollowedProjectsData} from "./App";
+import {Collaboration} from "domain/Collaboration";
 
 export async function getOptionsData(): Promise<Collaboration[]> {
     // https://circleci.com/api/v2/me/collaborations

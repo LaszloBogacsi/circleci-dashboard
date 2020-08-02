@@ -1,0 +1,9 @@
+.modal {
+    background-color: var(--input-background-color);
+    padding: 1rem;
+    position: absolute;
+    top: 3.5rem;
+    right: 0;
+    border-radius: 4px;
+    z-index: 99;
+}

@@ -17,20 +17,15 @@ html, body, #root {
   padding:2rem;
 }
 
+.svg {
+  margin-right: 6px;
+  pointer-events: none
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
   }
-}
-
-.App-header {
-  min-height: 5vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: var(--secondary-text-color);
 }
 
 @keyframes App-logo-spin {
