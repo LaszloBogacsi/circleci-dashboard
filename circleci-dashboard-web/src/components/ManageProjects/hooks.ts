@@ -1,7 +1,7 @@
 import {getFollowedProjects} from "../../MockResponse";
-import {get} from "../../utils/http";
+import {get} from "utils/http";
 import {useEffect, useState} from "react";
-import {FollowedProjectsData} from "../../App";
+import {FollowedProjectsData} from "domain/FollowedProjectsData";
 
 export function useFollowedProjects(inMockMode: boolean) {
     const initialApiData: FollowedProjectsData[] = [];
