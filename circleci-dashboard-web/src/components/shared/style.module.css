@@ -7,3 +7,27 @@
     border-radius: 4px;
     z-index: 99;
 }
+
+
+.buttonGroup {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+
+.buttonNegative {
+    border: 1px solid var(--secondary-text-color);
+    border-radius: 4px;
+    background-color: var(--input-background-color);
+    color: var(--secondary-text-color);
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+}
+.buttonPositive {
+    border: 1px solid var(--input-background-color);
+    border-radius: 4px;
+    background-color: var(--secondary-text-color);
+    color: var(--input-background-color);
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+}

@@ -1,0 +1,13 @@
+.intervalModal {
+    text-align: left;
+}
+.intervalModal input {
+    margin-bottom: 1rem;
+    line-height: 1.5rem;
+    border-radius: 4px;
+    background-color: #272727;
+    color: var(--secondary-text-color);;
+    border: 1px solid var(--secondary-text-color);
+    padding-left: 1rem;
+
+}

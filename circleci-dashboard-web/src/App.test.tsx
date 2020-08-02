@@ -1,5 +1,5 @@
 import React from 'react';
-import {getProjectStatus} from './App';
+import {getProjectStatus} from "components/Dashboard/Widget/Widget";
 
 test('can determine status from one workflow when workflow was successful', () => {
     const workflows = [

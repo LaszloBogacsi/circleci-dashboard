@@ -1,0 +1,11 @@
+.addProjectsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+.addProjectsHeader object {
+    width: 1.8rem;
+    height: 1.8rem;
+}
