@@ -9,7 +9,7 @@ import Login from "components/Login/Login";
 import Dashboard from "components/Dashboard/Dashboard";
 import ManageProjects from "components/ManageProjects/ManageProjects";
 import {getFromLocalStorage, saveToLocalStorage} from "utils/localStorage";
-import {get, post} from "utils/http";
+import {getCollaborations, postLogin, postLogout} from "utils/http";
 import {User} from "domain/User";
 import {Collaboration} from "domain/Collaboration";
 import {SelectedProject} from "domain/SelectedProject";
@@ -32,7 +32,7 @@ export default function App() {
 
     useEffect(() => {
         const loadOptions = async () => {
-            const collaborations = await get<Collaboration[]>("http://localhost:4000/data/collaboration");
+            const collaborations = await getCollaborations();
             setOptions(collaborations);
             if (!previouslySelectedOrg) {
                 setSelectedOrg(collaborations[0])
@@ -58,7 +58,7 @@ export default function App() {
 
     const setApiTokenAndLogIn = (token: string) => {
         async function login() {
-            await post("http://localhost:4000/auth/login", {}, {token});
+            await postLogin(token);
             setIsLoggedIn(true);
         }
         const loginMock = async () => setIsLoggedIn(true)
@@ -72,7 +72,7 @@ export default function App() {
 
     const logout = async () => {
         try {
-            await post("http://localhost:4000/auth/logout", {}, {});
+            await postLogout();
             setUser(null);
             setIsLoggedIn(false);
 

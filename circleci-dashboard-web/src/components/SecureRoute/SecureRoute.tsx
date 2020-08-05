@@ -1,7 +1,7 @@
 import React, {ReactElement, useEffect, useState} from "react";
 import {Redirect, Route} from "react-router-dom";
 import {User} from "domain/User";
-import {get} from "utils/http";
+import {getAuth, getUser} from "utils/http";
 
 interface SecureRouteProps {
     inMockMode: boolean
@@ -11,7 +11,6 @@ interface SecureRouteProps {
 
     [rest: string]: any
 }
-const API_BASE_URL = "http://localhost:4000";
 
 export default (props: SecureRouteProps) => {
     const {user, setUser, render, rest, inMockMode} = props;
@@ -20,7 +19,7 @@ export default (props: SecureRouteProps) => {
     useEffect(() => {
         const loadAuth = async () => {
             try {
-                await get(`${API_BASE_URL}/auth`)
+                await getAuth();
                 setIsAuthenticated(true);
             } catch (e) {
                 setShouldRedirect(true)
@@ -34,7 +33,7 @@ export default (props: SecureRouteProps) => {
 
         inMockMode ? loadMockAuth() : loadAuth();
 
-        const loadUser = async () => setUser(await get<User>(`${API_BASE_URL}/user`))
+        const loadUser = async () => setUser(await getUser())
         const loadMockUser = async () => setUser({id: "some Id", login: "UserLoginName", name: "User Name"})
 
         if (user === null) {

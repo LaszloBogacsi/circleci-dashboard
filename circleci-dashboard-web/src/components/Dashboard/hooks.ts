@@ -1,6 +1,6 @@
 import {SelectedProject} from "../../domain/SelectedProject";
 import {getJobsForWorkflow, getPipelinesForProject, getWorkflowsForPipeline} from "../../MockResponse";
-import {get} from "../../utils/http";
+import {getApiData} from "../../utils/http";
 import {useCallback, useState} from "react";
 import {useInterval} from "utils/hooks";
 import {ApiData} from "domain/ApiData";
@@ -9,12 +9,10 @@ export function useIntervalApiData(projects: SelectedProject[], interval: number
     const initialApiData: ApiData[] = [];
     const [apiData, setApiData] = useState(initialApiData);
 
-    const API_BASE_URL = "http://localhost:4000";
-    const getProjectsParams = () => projects.map(project => `${project.name}|${project.branch}`).join(",")
+    const getProjectsParams: () => string = () => projects.map(project => `${project.name}|${project.branch}`).join(",")
 
-    const getApiData = async(): Promise<ApiData[]> => await get<ApiData[]>(`${API_BASE_URL}/data/builddata`, {projects: getProjectsParams()})
     const loadApiData = useCallback(async isCancelled => {
-        const apiData = await getApiData();
+        const apiData = await getApiData(getProjectsParams());
         if (isCancelled()) return;
         setApiData(apiData);
         setLastRefreshed(new Date());
