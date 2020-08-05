@@ -1,11 +1,11 @@
 var express = require('express');
 var router = express.Router();
-const {authenticateFromCookie} = require('../authentication')
+const {authenticate} = require('../authentication')
 const authCookieName = "circleci-api-token";
 
 /* check token cookie present */
 router.get('/', async function (req, res, next) {
-    const auth = authenticateFromCookie(req.cookies);
+    const auth = authenticate(req.cookies);
     !auth.success ? auth.error(res) : res.status(200).send()
 });
 
@@ -13,7 +13,7 @@ router.get('/', async function (req, res, next) {
 router.post('/login', async function (req, res, next) {
     const body = req.body;
 // maxage in ms
-    res.cookie(authCookieName, body.token, {httpOnly: true, maxAge: 900000, sameSite: "none"})
+    res.cookie(authCookieName, body.token, {httpOnly: true, maxAge: 900000, sameSite: undefined})
         .status(200)
         .send();
 });

@@ -21,7 +21,7 @@ interface DashboardProps {
 export default (props: DashboardProps) => {
     const {projects, lastRefreshed, setLastRefreshed, refreshInterval, setRefreshInterval, inMockMode} = props;
     const [lastUpdated, setLastUpdated] = useState<string>("");
-    const apiData = inMockMode ? useIntervalApiData(projects, refreshInterval, setLastRefreshed) : useMockIntervalApiData(projects, refreshInterval, setLastRefreshed);
+    const apiData = inMockMode ? useMockIntervalApiData(projects, refreshInterval, setLastRefreshed) : useIntervalApiData(projects, refreshInterval, setLastRefreshed);
 
     useEffect(() => {
         const id = setInterval(() => setLastUpdated(getFormattedSince(new Date().getTime() - lastRefreshed.getTime())), 1000)
