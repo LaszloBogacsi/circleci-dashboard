@@ -4,7 +4,7 @@ import {Collaboration} from "../domain/Collaboration";
 import {ApiData} from "../domain/ApiData";
 import {FollowedProjectsData} from "../domain/FollowedProjectsData";
 
-const API_BASE_URL = "http://localhost:4000";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 async function get<T>(url: string, params: { [key: string]: string } = {}): Promise<T> {
     const result = await axios.get(url, {params, withCredentials: true});
@@ -36,7 +36,6 @@ export async function postLogout() {
     await post(`${API_BASE_URL}/auth/logout`, {}, {});
 }
 
-
 export async function getApiData(projects: string): Promise<ApiData[]> {
     return await get<ApiData[]>(`${API_BASE_URL}/data/builddata`, {projects});
 }
@@ -44,4 +43,3 @@ export async function getApiData(projects: string): Promise<ApiData[]> {
 export async function getFollowedProjects(): Promise<FollowedProjectsData[]> {
     return await get<FollowedProjectsData[]>(`${API_BASE_URL}/data/projects`);
 }
-
