@@ -31,16 +31,15 @@ export default function App() {
     const [refreshInterval, setRefreshInterval] = useState<number>(previouslySetRefreshInterval ? previouslySetRefreshInterval : 60 * 1000)  // 1 minute
 
     useEffect(() => {
-        async function getOptions(): Promise<Collaboration[]> {
-            if (inMockMode) {
-                return getOptionsData();
-            } else {
-                return get<Collaboration[]>("http://localhost:4000/options")
+        const loadOptions = async () => {
+            const collaborations = await get<Collaboration[]>("http://localhost:4000/data/collaboration");
+            setOptions(collaborations);
+            if (!previouslySelectedOrg) {
+                setSelectedOrg(collaborations[0])
             }
         }
-
-        const loadOptions = async () => {
-            let collaborations = await getOptions();
+        const loadMockOptions = async () => {
+            const collaborations = await getOptionsData();
             setOptions(collaborations);
             if (!previouslySelectedOrg) {
                 setSelectedOrg(collaborations[0])
@@ -48,7 +47,7 @@ export default function App() {
         }
 
         if (user) {
-            loadOptions();
+            inMockMode ? loadMockOptions() : loadOptions();
         }
     }, [user])
 
@@ -59,17 +58,11 @@ export default function App() {
 
     const setApiTokenAndLogIn = (token: string) => {
         async function login() {
-            if (inMockMode) {
-                setIsLoggedIn(true);
-
-            } else {
-                await post("http://localhost:4000/login", {}, {token});
-                setIsLoggedIn(true);
-            }
-
+            await post("http://localhost:4000/auth/login", {}, {token});
+            setIsLoggedIn(true);
         }
-
-        login();
+        const loginMock = async () => setIsLoggedIn(true)
+        inMockMode ? loginMock() : login();
     }
 
     const setAndStoreRefreshInterval = (interval: number): void => {
@@ -79,7 +72,7 @@ export default function App() {
 
     const logout = async () => {
         try {
-            await post("http://localhost:4000/logout", {}, {});
+            await post("http://localhost:4000/auth/logout", {}, {});
             setUser(null);
             setIsLoggedIn(false);
 

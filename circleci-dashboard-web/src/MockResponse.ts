@@ -711,7 +711,7 @@ export async function getJobsForWorkflow() {
         ]
     }
 }
-export async function getFollowedProjects(): Promise<FollowedProjectsData[]> {
+export async function getFollowedProjectsData(): Promise<FollowedProjectsData[]> {
     return [
         {
             "branches": {

@@ -6,7 +6,7 @@ import {WidgetData, WidgetJob, WidgetWorkflow} from "domain/WidgetData";
 import {SelectedProject} from "domain/SelectedProject";
 import {ApiData} from "domain/ApiData";
 import edit from "img/edit.svg";
-import {useIntervalApiData} from "components/Dashboard/hooks";
+import {useIntervalApiData, useMockIntervalApiData} from "components/Dashboard/hooks";
 import styles from "./style.module.css";
 
 interface DashboardProps {
@@ -21,7 +21,7 @@ interface DashboardProps {
 export default (props: DashboardProps) => {
     const {projects, lastRefreshed, setLastRefreshed, refreshInterval, setRefreshInterval, inMockMode} = props;
     const [lastUpdated, setLastUpdated] = useState<string>("");
-    const apiData = useIntervalApiData(projects, refreshInterval, setLastRefreshed, inMockMode);
+    const apiData = inMockMode ? useIntervalApiData(projects, refreshInterval, setLastRefreshed) : useMockIntervalApiData(projects, refreshInterval, setLastRefreshed);
 
     useEffect(() => {
         const id = setInterval(() => setLastUpdated(getFormattedSince(new Date().getTime() - lastRefreshed.getTime())), 1000)

@@ -11,6 +11,7 @@ interface SecureRouteProps {
 
     [rest: string]: any
 }
+const API_BASE_URL = "http://localhost:4000";
 
 export default (props: SecureRouteProps) => {
     const {user, setUser, render, rest, inMockMode} = props;
@@ -18,32 +19,26 @@ export default (props: SecureRouteProps) => {
     const [shouldRedirect, setShouldRedirect] = useState(false);
     useEffect(() => {
         const loadAuth = async () => {
-            if (inMockMode) {
+            try {
+                await get(`${API_BASE_URL}/auth`)
                 setIsAuthenticated(true);
-                setShouldRedirect(false)
-            } else {
-                try {
-                    await get("http://localhost:4000/auth")
-                    setIsAuthenticated(true);
-                } catch (e) {
-                    setShouldRedirect(true)
-                }
-            }
-
-        }
-        loadAuth();
-
-        const loadUser = async () => {
-            if (inMockMode) {
-                setUser({id: "some Id", login: "UserLoginName", name: "User Name"});
-            } else {
-                const user = await get<User>("http://localhost:4000/user")
-                setUser(user);
+            } catch (e) {
+                setShouldRedirect(true)
             }
         }
+
+        const loadMockAuth = async () => {
+            setIsAuthenticated(true);
+            setShouldRedirect(false)
+        }
+
+        inMockMode ? loadMockAuth() : loadAuth();
+
+        const loadUser = async () => setUser(await get<User>(`${API_BASE_URL}/user`))
+        const loadMockUser = async () => setUser({id: "some Id", login: "UserLoginName", name: "User Name"})
 
         if (user === null) {
-            loadUser();
+            inMockMode ? loadMockUser() : loadUser();
         }
     }, []);
 

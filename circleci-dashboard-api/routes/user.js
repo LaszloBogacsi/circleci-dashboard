@@ -1,19 +1,18 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 const axios = require('axios');
+const {authenticateFromCookie} = require('../authentication')
+
+const CIRCLECI_BASE_URL = "https://circleci.com/api/v2";
 
 /* GET users listing. */
 router.get('/', async function(req, res, next) {
-  const url = "https://circleci.com/api/v2/me";
-  const token = req.cookies["circleci-api-token"];
-  if (!token) {
-    res.status(403).send({message: "Api Token not found"})
+  const auth = authenticateFromCookie(req.cookies);
 
-  } else {
-    const result = await axios.get(url, {headers: {"Circle-Token" : token, "Access-Control-Allow-Origin": "*", "Content-Type": "text/plain;charset=utf-8"}});
+  const url = `${CIRCLECI_BASE_URL}/me`;
+  const headers = {"Circle-Token": auth.token, "Access-Control-Allow-Origin": "*", "Content-Type": "text/plain;charset=utf-8"};
 
-    res.send(result.data);
-  }
+  !auth.success ? auth.error(res) : res.send((await axios.get(url, {headers})).data);
 });
 
 module.exports = router;
