@@ -7,7 +7,7 @@ import SecureRoute from "components/SecureRoute/SecureRoute";
 import Header from "components/Header/Header";
 import Login from "components/Login/Login";
 import Dashboard from "components/Dashboard/Dashboard";
-import ManageProjects from "components/ProjectsManager/ManageProjects";
+import ManageProjects from "components/ProjectsManager/ProjectsManager";
 import {getFromLocalStorage, saveToLocalStorage} from "utils/localStorage";
 import {getCollaborations, postLogin, postLogout} from "utils/http";
 import {User} from "domain/User";
