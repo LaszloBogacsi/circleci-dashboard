@@ -1,8 +1,8 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import {useFollowedProjects} from "components/ManageProjects/hooks";
-import SelectedProjectsList from "components/ManageProjects/SelectedProjectsList/SelectedProjectsList";
-import ProjectSelector from "components/ManageProjects/ProjectSelector/ProjectSelector";
+import {useFollowedProjects} from "components/ProjectsManager/hooks";
+import SelectedProjectsList from "components/ProjectsManager/SelectedProjectsList/SelectedProjectsList";
+import ProjectSelector from "components/ProjectsManager/ProjectSelector/ProjectSelector";
 import {SelectedProject} from "domain/SelectedProject";
 import {Collaboration} from "domain/Collaboration";
 import {FollowedProjects} from "domain/FollowedProjects";
@@ -10,14 +10,14 @@ import {FollowedProjectsData} from "domain/FollowedProjectsData";
 import back from "img/left.svg";
 import styles from "./style.module.css";
 
-interface ManageProjectsProps {
+interface ProjectsManagerProps {
     selectedOrg: Collaboration
     selectedProjects: SelectedProject[]
     setSelectedProjects: (projects: SelectedProject[]) => void
     inMockMode: boolean
 }
 
-export default(props: ManageProjectsProps) => {
+export default(props: ProjectsManagerProps) => {
     const {selectedOrg, selectedProjects, setSelectedProjects, inMockMode} = props;
 
     const projects = useFollowedProjects(inMockMode);
